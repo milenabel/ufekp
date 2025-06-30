@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2022)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: article.aux
+The style file: siamplain.bst
+Database file #1: article_refs_mod.bib
+Warning--I didn't find a database entry for "Wendland"
+Warning--I didn't find a database entry for "Wu"
+Warning--I didn't find a database entry for "Buhmann"
+Warning--I didn't find a database entry for "Euclid"
+You've used 20 entries,
+            2268 wiz_defined-function locations,
+            695 strings with 7650 characters,
+and the built_in function-call counts, 8481 in all, are:
+= -- 814
+> -- 312
+< -- 0
++ -- 124
+- -- 102
+* -- 613
+:= -- 1170
+add.period$ -- 20
+call.type$ -- 20
+change.case$ -- 110
+chr.to.int$ -- 0
+cite$ -- 20
+duplicate$ -- 447
+empty$ -- 724
+format.name$ -- 102
+if$ -- 1899
+int.to.chr$ -- 0
+int.to.str$ -- 20
+missing$ -- 20
+newline$ -- 63
+num.names$ -- 40
+pop$ -- 153
+preamble$ -- 1
+purify$ -- 91
+quote$ -- 0
+skip$ -- 367
+stack$ -- 0
+substring$ -- 689
+swap$ -- 188
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 78
+warning$ -- 0
+while$ -- 89
+width$ -- 22
+write$ -- 183
+(There were 4 warnings)

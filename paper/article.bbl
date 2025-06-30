@@ -1,0 +1,102 @@
+\begin{thebibliography}{10}
+
+\bibitem{Aiton2011}
+{\sc K.~A. Aiton}, {\em {A Radial Basis Function Partition of Unity Method for
+  Transport on the Sphere}}, master's thesis, Boise State University, USA,
+  2014.
+
+\bibitem{FlyerElliptic}
+{\sc V.~Bayona, N.~Flyer, B.~Fornberg, and G.~A. Barnett}, {\em On the role of
+  polynomials in rbf-fd approximations: Ii. numerical solution of elliptic
+  pdes}, Journal of Computational Physics, 332 (2017), pp.~257 -- 273.
+
+\bibitem{Bayona2010}
+{\sc V.~Bayona, M.~Moscoso, M.~Carretero, and M.~Kindelan}, {\em {RBF-FD}
+  formulas and convergence properties}, J. Comput. Phys., 229 (2010),
+  pp.~8281--8295.
+
+\bibitem{Davydov2011}
+{\sc O.~Davydov and D.~T. Oanh}, {\em Adaptive meshless centres and {RBF}
+  stencils for poisson equation}, J. Comput. Phys., 230 (2011), pp.~287--304.
+
+\bibitem{Fasshauer:2007}
+{\sc G.~E. Fasshauer}, {\em {Meshfree Approximation Methods with {MATLAB}}},
+  Interdisciplinary Mathematical Sciences - Vol. 6, World Scientific
+  Publishers, Singapore, 2007.
+
+\bibitem{FlyerNS}
+{\sc N.~Flyer, G.~A. Barnett, and L.~J. Wicker}, {\em Enhancing finite
+  differences with radial basis functions: Experiments on the {N}avier-{S}tokes
+  equations}, J. Comput. Phys., 316 (2016), pp.~39--62.
+
+\bibitem{FlyerPHS}
+{\sc N.~Flyer, B.~Fornberg, V.~Bayona, and G.~A. Barnett}, {\em {On the role of
+  polynomials in RBF-FD approximations: I. Interpolation and accuracy}}, J.
+  Comput. Phys., 321 (2016), pp.~21--38.
+
+\bibitem{FlyerLehto2012}
+{\sc N.~Flyer, E.~Lehto, S.~Blaise, G.~B. Wright, and A.~St-Cyr}, {\em {A guide
+  to {RBF}-generated finite differences for nonlinear transport: shallow water
+  simulations on a sphere}}, J. Comput. Phys., 231 (2012), pp.~4078--4095.
+
+\bibitem{FlyerWright:2007}
+{\sc N.~Flyer and G.~B. Wright}, {\em Transport schemes on a sphere using
+  radial basis functions}, J. Comput. Phys., 226 (2007), pp.~1059--1084.
+
+\bibitem{FlyerWright:2009}
+{\sc N.~Flyer and G.~B. Wright}, {\em {A radial basis function method for the
+  shallow water equations on a sphere}}, Proc. Roy. Soc. A, 465 (2009),
+  pp.~1949--1976.
+
+\bibitem{FoL11}
+{\sc B.~Fornberg and E.~Lehto}, {\em {Stabilization of {RBF}-generated finite
+  difference methods for convective {PDE}s}}, J. Comput. Phys., 230 (2011),
+  pp.~2270--2285.
+
+\bibitem{FuselierWright:2013}
+{\sc E.~J. Fuselier and G.~B. Wright}, {\em {A high-order kernel method for
+  diffusion and reaction-diffusion equations on surfaces}}, J. Sci. Comput., 56
+  (2013), pp.~535--565.
+
+\bibitem{LSWSISC2017}
+{\sc E.~Lehto, V.~Shankar, and G.~B. Wright}, {\em A radial basis function
+  (rbf) compact finite difference (fd) scheme for reaction-diffusion equations
+  on surfaces}, SIAM Journal on Scientific Computing, 39 (2017),
+  pp.~A2129--A2151.
+
+\bibitem{Piret2012}
+{\sc C.~Piret}, {\em {The orthogonal gradients method: A radial basis functions
+  method for solving partial differential equations on arbitrary surfaces}}, J.
+  Comput. Phys., 231 (2012), pp.~4662--4675.
+
+\bibitem{Piret2016}
+{\sc C.~Piret and J.~Dunn}, {\em Fast rbf ogr for solving pdes on arbitrary
+  surfaces}, AIP Conference Proceedings, 1776 (2016).
+
+\bibitem{SFJCP2018}
+{\sc V.~Shankar and A.~L. Fogelson}, {\em Hyperviscosity-based stabilization
+  for radial basis function-finite difference {(RBF-FD)} discretizations of
+  advection-diffusion equations}, J. Comput. Physics, 372 (2018), pp.~616--639.
+
+\bibitem{SNKJCP2018}
+{\sc V.~Shankar, A.~Narayan, and R.~M. Kirby}, {\em {RBF-LOI:} augmenting
+  radial basis functions (rbfs) with least orthogonal interpolation {(LOI)} for
+  solving pdes on surfaces}, J. Comput. Physics, 373 (2018), pp.~722--735.
+
+\bibitem{SWJCP2018}
+{\sc V.~Shankar and G.~B. Wright}, {\em Mesh-free semi-lagrangian methods for
+  transport on a sphere using radial basis functions}, J. Comput. Phys., 366
+  (2018), pp.~170--190.
+
+\bibitem{SWFKJSC2014}
+{\sc V.~Shankar, G.~B. Wright, R.~M. Kirby, and A.~L. Fogelson}, {\em A radial
+  basis function ({RBF})-finite difference ({FD}) method for diffusion and
+  reaction--diffusion equations on surfaces}, J. Sci. Comput., 63 (2014),
+  pp.~745--768.
+
+\bibitem{Wright200699}
+{\sc G.~B. Wright and B.~Fornberg}, {\em {Scattered node compact finite
+  difference-type formulas generated from radial basis functions}}, J. Comput.
+  Phys., 212 (2006), pp.~99--123.
+
+\end{thebibliography}
