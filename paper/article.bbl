@@ -94,6 +94,10 @@
   reaction--diffusion equations on surfaces}, J. Sci. Comput., 63 (2014),
   pp.~745--768.
 
+\bibitem{Wendland:2004}
+{\sc H.~Wendland}, {\em {Scattered data approximation}}, vol.~17 of Cambridge
+  Monogr. Appl. Comput. Math., Cambridge University Press, Cambridge, 2005.
+
 \bibitem{Wright200699}
 {\sc G.~B. Wright and B.~Fornberg}, {\em {Scattered node compact finite
   difference-type formulas generated from radial basis functions}}, J. Comput.

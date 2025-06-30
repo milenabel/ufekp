@@ -1,26 +1,147 @@
-\section{Unified interpolation with kernels and polynomials}
+\section{Unified interpolation with sparse kernels and polynomials}
 \label{sec:lag_uni}
+
+%We will now present a unified framework for kernel and polynomial approximation. Consider the hybrid \emph{interpolant} given by:
+%\begin{align}
+%s(\vx) = \sum\limits_{k=1}^N c_k \phi\lf(\ep \|\vx-\vx_k\|\rt) + \sum\limits_{j=1}^{\ell + d \choose d} d_j p_j(\vx),
+%\label{eq:hybrid}
+%\end{align}
+%where $\phi$ is an RBF and $\ep$ its shape parameter, and the $p_j$ functions form a basis for the space of total degree polynomials of degree $\ell$ in $d$ dimensions.  As mentioned previously, while it is traditional to use conditionally positive-definite kernels with global support as choices for $\phi$, we now assume $\phi$ is a \emph{compactly-supported} and \emph{positive-definite} RBF.  While there are many such RBFs~\cite{Wendland,Wu,Buhmann,Euclid}, we focus on the Wendland functions given by:
+%\begin{align}
+%\phi_{m,n}(r) = \begin{cases}
+%\frac{1}{\Gamma(n) 2^{n-1}} \int\limits_{r}^1 s(1-s)^m (s^2 - r^2)^{n-1} ds & \text{for } 0 \leq r \leq 1, \\ 
+%0 & \text{for } r > 1.
+%\end{cases}
+%\end{align}
+%For the Wendland functions, the shape parameter $\ep$ serves as the reciprocal of the radius of support $r$. Unfortunately, these RBFs have historically traded off increased sparsity (and improved conditioning) in the interpolation matrix for decreased accuracy and convergence rates~\cite{Fasshauer:2007}. As a side note, globally-supported RBFs also exhibit decreased accuracy and convergence rates upon spatial refinement, primarily due to ill-conditioning in the Gramian~\cite{Wendland:2004,Fasshauer:2007}. 
+%
+%Interestingly, recent work has shown~\cite{FlyerNS,FlyerPHS,FlyerElliptic,SFJCP2018,SWJCP2018} that at least for piecewise-smooth globally-supported RBFs (such as the polyharmonic splines) used as \emph{local} interpolants, this decrease in accuracy can be overcome by augmenting the RBF interpolant with polynomials. Our goal in this work is to both demonstrate that this technique works in the context of compactly-supported RBFs used as global approximants, and to demonstrate that the use of compactly-supported RBFs creates a highly general and flexible unified framework for kernel and polynomial approximation. 
+%
+%To that end, we shall now present and discuss several special cases of the above interpolation scheme. We will also discuss efficient solution of the resulting linear systems for each of the limiting cases. In the following discussion, let $X = \{\vx_k \}_{k=1}^N$ be the set of data sites for interpolation. Further, let $q$ be the smallest pairwise distance between of nodes in $X$, and $w$ be the largest pairwise distance. Finally, let $r = 1/\ep$ be the support of the Wendland RBF.
+%
+%\subsection{The polynomial limit ($r < q$)}
+%
+%\subsubsection{Interpolation}
+%When the support $r$ of any Wendland RBF is made smaller than $q$, the Wendland RBFs each take on the value of $1$ at the nodes and $0$ elsewhere, with transitions between the nodes dictated by the smoothness of the Wendland RBF. Thus, the interpolation constraints \eqref{eq:interp_constraints} lead to the following linear system:
+%\begin{align}
+%\begin{bmatrix}
+%I & P \\
+%P^T & 0
+%\end{bmatrix}
+%\begin{bmatrix}
+%\vc\\
+%\vd
+%\end{bmatrix}
+%=
+%\begin{bmatrix}
+%\vf\\
+%{\bf 0}
+%\end{bmatrix},
+%\label{eq:small_limit_linsys}
+%\end{align}
+%where $I$ is the $N \times N$ identity matrix and $P$ is the Vandermonde-like matrix of evaluations of the polynomial basis at the interpolation nodes. To better understand this linear system, we use block Gaussian elimination to rewrite this as two equations:
+%\begin{align}
+%P^T P \vd &= P^T \vf,\\
+%\vc &= \vf - P\vd.
+%\end{align}
+%The first system of equations is immediately recognizable as the system of normal equations arising from the least squares problem of minimizing $\|P \vd - \vf\|_2^2$. Thus, in this context, despite the presence of RBFs in the approximation, the polynomial coefficients $\vd$ are identical to the coefficients obtained from the least-squares problem. Clearly, the RBF coefficients $\vc$ only serve to enforce interpolation at the collocation nodes. 
+%
+%\subsubsection{Linear Algebra}
+%
+%In the polynomial limit, the unified interpolant \eqref{eq:hybrid} can be computed efficiently using the QR decomposition as follows:
+%\begin{enumerate}
+%\item Compute $P = QR$, the (reduced) QR decomposition of the polynomial least-squares matrix $P$. 
+%\item Solve the Schur complement system for the polynomial coefficients $\vd$ as $\vd = R^{-1} Q^T \vf$. 
+%\item Compute the RBF coefficients $\vc = \vf - P \vd$.
+%\end{enumerate}
+%The SVD could also be used to find $\vd$. When solved in this fashion, the block system \eqref{eq:small_limit_linsys} does not need to be explicitly computed or stored, nor do we need to compute the matrix $P^T$. This approach can be applied with a small modification if $P$ is rank-deficient also: column pivoting can be used for the QR decomposition, and truncation of the singular values can be used for the SVD.
+%
+%\subsubsection{Evaluation}
+%
+%Once the coefficients $\vc$ and $\vd$ are computed, the interpolant \eqref{eq:hybrid} can be evaluated anywhere. Let $X_e = \{\vx^e_i \}_{i=1}^{N_e}$ be a set of \emph{evaluation points}. Then, the interpolant can be evaluated at $X_e$ as:
+%\begin{align}
+%\lf.s(\vx)\rt|_{X_e} = \begin{bmatrix} 
+%A_e & P_e 
+%\end{bmatrix}
+%\begin{bmatrix}
+%\vc\\
+%\vd
+%\end{bmatrix} = A_e \vc + P_e \vd,
+%\end{align}
+%where $A_e$ and $P_e$ are evaluations of the RBF and polynomial basis functions at $X_e$. In general, $A_e$ is a sparse matrix if Wendland RBFs are used, and its structure is determined by the smoothness of the Wendland RBF, the precise value of $\epsilon$ (and therefore $r$), and the number of evaluation points $N_e$.
+%
+%\subsection{Hybrid approximation ($q < r$) }
+%
+%\subsubsection{Interpolation}
+%If $r > q$ (or conversely $\epsilon$ is sufficiently small), the constraints \eqref{eq:interp_constraints} can no longer be represented by \eqref{eq:small_limit_linsys}. Instead, they now correspond to a similar block linear system with $I$ replaced by a sparse matrix $A$ with entries $A_{ij} = \phi\lf(\|\vx_i - \vx_j\|\rt)$:
+%\begin{align}
+%\begin{bmatrix}
+%A & P \\
+%P^T & 0
+%\end{bmatrix}
+%\begin{bmatrix}
+%\vc\\
+%\vd
+%\end{bmatrix}
+%=
+%\begin{bmatrix}
+%\vf\\
+%{\bf 0}
+%\end{bmatrix}.
+%\label{eq:general_linsys}
+%\end{align}
+%Once again, we may use block Gaussian elimination to rewrite this as
+%\begin{align}
+%P^T A^{-1}P \vd &= P^T A^{-1} \vf,\\
+%A\vc &= \vf - P\vd,
+%\end{align}
+%where now $A^{-1}$ appears in the equation for $\vd$, and finding $\vc$ requires the inversion of a sparse matrix $A$. The exact properties of this approximation depend on the value of $r$, the smoothness of the Wendland kernel, and the polynomial degree $\ell$. However, unlike in the polynomial limit $r<q$, both the RBFs and the polynomials participate in the approximation.
+%
+%\subsubsection{Linear Algebra}
+%Unlike in the polynomial limit, it is not possible to solve the above pair of equations for $\vd$ and $\vc$ using a single $QR$ decomposition of the matrix $P$. This leaves actually inverting the matrix $P^T A^{-1} P$. Unfortunately, this is a non-trivial task. The condition number of $A$ can range from $O(1)$ in the case of a small support $r$ to arbitrarily large for large $r$. Further, we have observed that the matrix $P^T P$ is typically very ill-conditioned since it is formed by evaluations of polynomials at a possibly arbitrary set of collocation points. In addition, though the matrix $P^T A^{-1} P$ is symmetric positive definite in exact arithmetic (since $A^{-1}$ is symmetric positive-definite), we have observed that the product $P^T A^{-1} P$ loses symmetry due to rounding errors even when $A$ has a condition number of $O(1)$. Fortunately, we have found that the symmetry of $P^T A^{-1} P$ can be restored using standard numerical linear algebra. Since $A$ is symmetric positive-definite, it can be written in terms of its Cholesky decomposition as
+%\begin{align}
+%A = LL^T,
+%\end{align}
+%where $L$ is a lower-triangular matrix. If $A$ is sparse, it is also possible to maintain sparsity in $L$. Using this decomposition, we can rewrite the Schur complement system as:
+%\begin{align}
+%P^T \lf(LL^T\rt)^{-1} P \vd &= P^T \lf(LL^T\rt)^{-1} \vf,\\
+%\implies P^T L^{-T} \underbrace{L^{-1} P}_{B} \vd &= P^T L^{-T} \underbrace{L^{-1} \vf}_{\vg},\\
+%\implies B^T B \vd &= B^T \vg,
+%\end{align}
+%where $B =L^{-1} P$. This is in fact a system of normal equations for $\vd$. To solve this, we can clearly decompose B as $B = QR$, and compute the polynomial coefficients as $\vd = R^{-1} Q^T \vg$. Of course, the cost also includes inverting the sparse lower-triangular matrix $L$. Nevertheless, this approach ensures that $P^T A^{-1} P$ is symmetric while also transforming the problem into one solvable by the $QR$ decomposition. Finally, the RBF coefficients $\vc$ can be computed as
+%\begin{align}
+%\vc = L^{-T}L^{-1}\lf(\vf - P \vd\rt)
+%\end{align}
+%
+
 
 We will now present a unified framework for kernel and polynomial approximation. Consider the hybrid \emph{interpolant} given by:
 \begin{align}
 s(\vx) = \sum\limits_{k=1}^N c_k \phi\lf(\ep \|\vx-\vx_k\|\rt) + \sum\limits_{j=1}^{\ell + d \choose d} d_j p_j(\vx),
 \label{eq:hybrid}
 \end{align}
-where $\phi$ is an RBF and $\ep$ its shape parameter, and the $p_j$ functions form a basis for the space of total degree polynomials of degree $\ell$ in $d$ dimensions.  As mentioned previously, while it is traditional to use conditionally positive-definite kernels with global support as choices for $\phi$, we now assume $\phi$ is a \emph{compactly-supported} and \emph{positive-definite} RBF.  While there are many such RBFs~\cite{Wendland,Wu,Buhmann,Euclid}, we focus on the Wendland functions given by:
+where $\phi$ is a radial kernel (a radial basis function) and $\ep$ its shape parameter, and the $p_j$ functions constitute a basis for the space of total degree polynomials of degree $\ell$ in $d$ dimensions. If the goal is to interpolate samples of a function $f(\vx):\mathbb{R} \to \mathbb{R}$ at some set of locations $X = \{\vx_k\}_{k=1}^N$, the interpolation coefficients $c_k$ and $d_j$ are found by enforcing the following constraints:
+\begin{align}
+s(\vx_k) &= f(\vx_k), k=1,\ldots,N, \label{eq:interp_constraints1}\\
+\sum\limits_{k=1}^N c_k p_j(\vx_k) &= 0, j=1,\ldots, {\ell + d \choose d}, \label{eq:interp_constraints2}
+\end{align}
+where the first constraint enforces interpolation while the second constraint enforces polynomial reproduction~\cite{Fasshauer:2007}. In the context of such unified interpolants, the most commonly-used choice for $\phi$ is the polyharmonic spline (PHS) RBF~\cite{FlyerNS,FlyerPHS,FlyerElliptic}, though other choices have been made in the literature~\cite{Liu,Macedo}. In this work, we focus on the case where $\phi$ is a \emph{compactly-supported} and \emph{positive-definite} RBF. More specifically, we focus on the popular class of RBFs known as Wendland functions~\cite{Wendland:2004} given by:
 \begin{align}
 \phi_{m,n}(r) = \begin{cases}
 \frac{1}{\Gamma(n) 2^{n-1}} \int\limits_{r}^1 s(1-s)^m (s^2 - r^2)^{n-1} ds & \text{for } 0 \leq r \leq 1, \\ 
 0 & \text{for } r > 1.
 \end{cases}
 \end{align}
-For the Wendland functions, the shape parameter $\ep$ serves as the reciprocal of the radius of support $r$. Unfortunately, these RBFs have historically traded off increased sparsity (and improved conditioning) in the interpolation matrix for decreased accuracy and convergence rates~\cite{Fasshauer:2007}. Recent work has shown~\cite{FlyerNS,FlyerPHS,FlyerElliptic,SFJCP2018,SWJCP2018} that this decrease in accuracy can be overcome by augmenting the RBF interpolant with polynomials. However, thus far, to the best of our knowledge, the only RBFs used have been those with global support, such as the positive-definite Gaussian RBF and the conditionally positive-definite polyharmonic splines. Our goal in this work is to both demonstrate that this technique works in the context of Wendland RBFs, and to demonstrate that the use of compactly-supported RBFs creates a highly general and flexible unified framework for kernel and polynomial approximation. 
+For these compactly-supported Wendland functions, the shape parameter $\ep$ serves as the reciprocal of the radius of support $r$.For the Wendland functions, the shape parameter $\ep$ serves as the reciprocal of the radius of support $r$. Unfortunately, these RBFs have historically traded off increased sparsity (and improved conditioning) in the interpolation matrix for decreased accuracy and convergence rates~\cite{Fasshauer:2007}. As a side note, globally-supported RBFs also exhibit decreased accuracy and convergence rates upon spatial refinement, primarily due to ill-conditioning in the Gramian~\cite{Wendland:2004,Fasshauer:2007}. 
 
-To that end, we shall now present and discuss several special cases of the above interpolation scheme. We will also discuss efficient solution of the resulting linear systems for each of the limiting cases. In the following discussion, let $X = \{\vx_k \}_{k=1}^N$ be the set of data sites for interpolation. Further, let $q$ be the smallest pairwise distance between of nodes in $X$, and $w$ be the largest pairwise distance. Finally, let $r = 1/\ep$ be the support of the Wendland RBF.
+Interestingly, recent work has shown~\cite{FlyerNS,FlyerPHS,FlyerElliptic,SFJCP2018,SWJCP2018} that at least for piecewise-smooth globally-supported RBFs (such as the polyharmonic splines) used as \emph{local} interpolants, this decrease in accuracy can be overcome by augmenting the RBF interpolant with polynomials. Our goal in this work is to both demonstrate that this technique works in the context of compactly-supported RBFs used as global approximants, and to demonstrate that the use of compactly-supported RBFs creates a highly general and flexible unified framework for kernel and polynomial approximation. 
+
+To that end, we shall now present and discuss several special cases of the above interpolation scheme. We will also discuss efficient solution of the resulting linear systems for each of the limiting cases. In the following discussion, let $X = \{\vx_k \}_{k=1}^N$ be the set of data sites for interpolation. Further, let $q$ be the smallest pairwise distance between of nodes in $X$, and $w$ be the largest pairwise distance. Finally, let $r = 1/\ep$ be the support of the Wendland RBF. We are interested in two regimes: (1) $r < q$, where the polynomials dominate the approximation, and (2) $q < r < w$, where both RBFs and polynomials contribute to the approximation, but the RBFs still produce sparse matrices. There are two other cases that we do not consider in this work. The first is the case where $r = w$ and the compactly-supported RBFs produce dense matrices; this regime is undesirable due to ill-conditioning and a lack of computational efficiency. The second is the case where the polynomial is not even used in the approximation; this regime is simply the traditional use case of compactly-supported RBFs. Both these cases have been covered extensively elsewhere~\cite{Fasshauer:2007}.
 
 \subsection{The polynomial limit ($r < q$)}
 
 \subsubsection{Interpolation}
-When the support $r$ of any Wendland RBF is made smaller than $q$, the Wendland RBFs each take on the value of $1$ at the nodes and $0$ elsewhere, with transitions between the nodes dictated by the smoothness of the Wendland RBF. Thus, the interpolation constraints \eqref{eq:interp_constraints} lead to the following linear system:
+When the support $r$ of any Wendland RBF is made smaller than $q$, the Wendland RBFs each take on the value of $1$ at the nodes and $0$ elsewhere, resembling smooth bump functions. Thus, the interpolation constraints \eqref{eq:interp_constraints1}--\eqref{eq:interp_constraints2} enforced at the set of nodes $X$ lead to the following linear system:
 \begin{align}
 \begin{bmatrix}
 I & P \\
@@ -37,24 +158,12 @@ P^T & 0
 \end{bmatrix},
 \label{eq:small_limit_linsys}
 \end{align}
-where $I$ is the $N \times N$ identity matrix and $P$ is the Vandermonde-like matrix of evaluations of the polynomial basis at the interpolation nodes. To better understand this linear system, we use block Gaussian elimination to rewrite this as two equations:
+where $I$ is the $N \times N$ identity matrix and $P_{ij} = p_j(\vx_i),i=1,\ldots,N, j=1,\ldots, {\ell + d \choose d}$ is the Vandermonde-like matrix of evaluations of the polynomial basis at $X$. To better understand this linear system, we use block Gaussian elimination to rewrite this as two equations:
 \begin{align}
-P^T P \vd &= P^T \vf,\\
-\vc &= \vf - P\vd.
+P^T P \vd &= P^T \vf, \label{eq:poly_normal}\\
+\vc &= \vf - P\vd. \label{eq:rbf_res}
 \end{align}
-The first system of equations is immediately recognizable as the system of normal equations arising from the least squares problem of minimizing $\|P \vd - \vf\|_2^2$. Thus, in this context, despite the presence of RBFs in the approximation, the polynomial coefficients $\vd$ are identical to the coefficients obtained from the least-squares problem. Clearly, the RBF coefficients $\vc$ only serve to enforce interpolation at the collocation nodes. 
-
-\subsubsection{Linear Algebra}
-
-In the polynomial limit, the unified interpolant \eqref{eq:hybrid} can be computed efficiently using the QR decomposition as follows:
-\begin{enumerate}
-\item Compute $P = QR$, the (reduced) QR decomposition of the polynomial least-squares matrix $P$. 
-\item Solve the Schur complement system for the polynomial coefficients $\vd$ as $\vd = R^{-1} Q^T \vf$. 
-\item Compute the RBF coefficients $\vc = \vf - P \vd$.
-\end{enumerate}
-The SVD could also be used to find $\vd$. When solved in this fashion, the block system \eqref{eq:small_limit_linsys} does not need to be explicitly computed or stored, nor do we need to compute the matrix $P^T$. This approach can be applied with a small modification if $P$ is rank-deficient also: column pivoting can be used for the QR decomposition, and truncation of the singular values can be used for the SVD.
-
-\subsubsection{Evaluation}
+\eqref{eq:poly_normal} is immediately recognizable as the system of normal equations arising from the least squares problem of minimizing $\|P \vd - \vf\|_2^2$. Thus, in this context, despite the presence of RBFs in the approximation, the polynomial coefficients $\vd$ are identical to the coefficients obtained from the least-squares problem. In addition, \eqref{eq:rbf_res} clearly shows that the RBF coefficient vector $\vc$ is simply the residual vector from the polynomial least-squares problem. 
 
 Once the coefficients $\vc$ and $\vd$ are computed, the interpolant \eqref{eq:hybrid} can be evaluated anywhere. Let $X_e = \{\vx^e_i \}_{i=1}^{N_e}$ be a set of \emph{evaluation points}. Then, the interpolant can be evaluated at $X_e$ as:
 \begin{align}
@@ -65,13 +174,31 @@ A_e & P_e
 \vc\\
 \vd
 \end{bmatrix} = A_e \vc + P_e \vd,
+\label{eq:poly_limit_eval}
 \end{align}
-where $A_e$ and $P_e$ are evaluations of the RBF and polynomial basis functions at $X_e$. In general, $A_e$ is a sparse matrix if Wendland RBFs are used, and its structure is determined by the smoothness of the Wendland RBF, the precise value of $\epsilon$ (and therefore $r$), and the number of evaluation points $N_e$.
+where $(A_e)_{ij} = \phi\left(\|\vx^e_i - \vx_j\|\right), i=1,\ldots,N_e, j=1,\ldots, N$ and $(P_e)_{ij} = p_j\left(\vx^e_i\right),i=1,\ldots,N_e, j = 1,\ldots {\ell + d \choose d}$.  In general, $A_e$ is a sparse and rectangular matrix, and its structure is determined by the smoothness of the Wendland RBF and its support $r$.
+
+An interesting implication of this discussion is that the residual vector $\vf - P\vd$ from a polynomial least squares problem can be treated as a set of RBF coefficients. These RBF coefficients can then be evaluated against \emph{any} compactly-supported RBF via \eqref{eq:poly_limit_eval} provided the support $r < q$. This turns any polynomial least squares problem into one of interpolation with the unified interpolant in \eqref{eq:hybrid}.
+
+
+\subsubsection{Linear Algebra}
+
+In the polynomial limit, the unified interpolant \eqref{eq:hybrid} can be computed efficiently using the QR decomposition as follows:
+%
+\begin{enumerate}
+\item Compute $P = QR$, the (reduced) QR decomposition of the polynomial least-squares matrix $P$. 
+\item Solve the Schur complement system for the polynomial coefficients $\vd$ as $\vd = R^{-1} Q^T \vf$. 
+\item Compute the RBF coefficients $\vc = \vf - P \vd$.
+\end{enumerate}
+%
+Alternatively, the SVD could be used instead of the QR decomposition to find $\vd$. When solved in this fashion, the block system \eqref{eq:small_limit_linsys} does not need to be explicitly computed or stored, nor do we need to compute the matrix $P^T$. This approach can be applied with a small modification if $P$ is rank-deficient also: column pivoting can be used for the QR decomposition, and truncation of the singular values can be used for the SVD.
+
+\subsubsection{Error Estimates}
 
 \subsection{Hybrid approximation ($q < r$) }
 
 \subsubsection{Interpolation}
-If $r > q$ (or conversely $\epsilon$ is sufficiently small), the constraints \eqref{eq:interp_constraints} can no longer be represented by \eqref{eq:small_limit_linsys}. Instead, they now correspond to a similar block linear system with $I$ replaced by a sparse matrix $A$ with entries $A_{ij} = \phi\lf(\|\vx_i - \vx_j\|\rt)$:
+If $r > q$ (or conversely $\epsilon$ is sufficiently small), the constraints \eqref{eq:interp_constraints1}--\eqref{eq:interp_constraints2} can no longer be represented by \eqref{eq:small_limit_linsys}. Instead, they now generate a block linear system with $I$ replaced by a sparse matrix $A$ with entries $A_{ij} = \phi\lf(\|\vx_i - \vx_j\|\rt), i,j = 1,\ldots, N$:
 \begin{align}
 \begin{bmatrix}
 A & P \\
@@ -90,35 +217,34 @@ P^T & 0
 \end{align}
 Once again, we may use block Gaussian elimination to rewrite this as
 \begin{align}
-P^T A^{-1}P \vd &= P^T A^{-1} \vf,\\
-A\vc &= \vf - P\vd,
+P^T A^{-1}P \vd &= P^T A^{-1} \vf,\label{eq:gen_schur1}\\
+A\vc &= \vf - P\vd.\label{eq:gen_schur2}
 \end{align}
-where now $A^{-1}$ appears in the equation for $\vd$, and finding $\vc$ requires the inversion of a sparse matrix $A$. The exact properties of this approximation depend on the value of $r$, the smoothness of the Wendland kernel, and the polynomial degree $\ell$. However, unlike in the polynomial limit $r<q$, both the RBFs and the polynomials participate in the approximation.
+Finding $\vc$ now requires the inversion of the sparse matrix $A$. The exact properties of this approximation depend on the value of $r$, the smoothness of the Wendland kernel, and the polynomial degree $\ell$.
 
 \subsubsection{Linear Algebra}
-Unlike in the polynomial limit, it is not possible to solve the above pair of equations for $\vd$ and $\vc$ using a single $QR$ decomposition of the matrix $P$. This leaves actually inverting the matrix $P^T A^{-1} P$. Unfortunately, this is a non-trivial task. The condition number of $A$ can range from $O(1)$ in the case of a small support $r$ to arbitrarily large for large $r$. Further, we have observed that the matrix $P^T P$ is typically very ill-conditioned since it is formed by evaluations of polynomials at a possibly arbitrary set of collocation points. In addition, though the matrix $P^T A^{-1} P$ is symmetric positive definite in exact arithmetic (since $A^{-1}$ is symmetric positive-definite), we have observed that the product $P^T A^{-1} P$ loses symmetry due to rounding errors even when $A$ has a condition number of $O(1)$. Fortunately, we have found that the symmetry of $P^T A^{-1} P$ can be restored using standard numerical linear algebra. Since $A$ is symmetric positive-definite, it can be written in terms of its Cholesky decomposition as
+Since $A \neq I$, it is not possible to solve the above pair of equations for $\vd$ and $\vc$ using a single $QR$ decomposition of the matrix $P$. Consequently, we are faced with two choices: (1) form and invert the entire matrix in \eqref{eq:general_linsys}, or (2) solve the pair of equations \eqref{eq:gen_schur1}--\eqref{eq:gen_schur2} efficiently. We choose the latter approach as we observed that it resulted in improved numerical stability and consequently greater accuracy.
+
+Unfortunately, inverting the matrix $S = P^T A^{-1} P$ appears to be a non-trivial task. The condition number of $A$ can range from $O(1)$ in the case of a small support $r$ to arbitrarily large for large $r$ (as $A$ becomes more dense). Further, we have observed that the matrix $P^T P$ is typically very ill-conditioned since it is formed by evaluations of polynomials at a possibly arbitrary set of collocation points. Consequently, though the matrix $S$ is symmetric positive-definite in exact arithmetic (since $A^{-1}$ is symmetric positive-definite), we have observed that the product $S = P^T A^{-1} P$ loses symmetry due to rounding errors even when $A$ has a condition number of $O(1)$; this loss in symmetry appears to significantly degrade the accuracy of the approximation. Fortunately, the symmetry of $S$ can be maintained using standard numerical linear algebra. Since $A$ is symmetric positive-definite, it can be written in terms of its Cholesky decomposition as
 \begin{align}
 A = LL^T,
 \end{align}
-where $L$ is a lower-triangular matrix. If $A$ is sparse, it is also possible to maintain sparsity in $L$. Using this decomposition, we can rewrite the Schur complement system as:
+where $L$ is a lower-triangular matrix. If $A$ is sparse, it is also possible to maintain sparsity in $L$ using a sparse Cholesky decomposition. Using this decomposition, we can rewrite \eqref{eq:gen_schur1} as:
 \begin{align}
 P^T \lf(LL^T\rt)^{-1} P \vd &= P^T \lf(LL^T\rt)^{-1} \vf,\\
 \implies P^T L^{-T} \underbrace{L^{-1} P}_{B} \vd &= P^T L^{-T} \underbrace{L^{-1} \vf}_{\vg},\\
 \implies B^T B \vd &= B^T \vg,
 \end{align}
-where $B =L^{-1} P$. This is in fact a system of normal equations for $\vd$. To solve this, we can clearly decompose B as $B = QR$, and compute the polynomial coefficients as $\vd = R^{-1} Q^T \vg$. Of course, the cost also includes inverting the sparse lower-triangular matrix $L$. Nevertheless, this approach ensures that $P^T A^{-1} P$ is symmetric while also transforming the problem into one solvable by the $QR$ decomposition. Finally, the RBF coefficients $\vc$ can be computed as
-\begin{align}
-\vc = L^{-T}L^{-1}\lf(\vf - P \vd\rt)
-\end{align}
+where $B =L^{-1} P$. This is in fact a system of normal equations for $\vd$ that is attempting to find the vector $\vd$ that minimizes $\|B \vd - \vg\|_2$. Using this approach, the coefficients $\vc$ and $\vd$ in the unified interpolant \eqref{eq:hybrid} can be computed as follows:
+\begin{enumerate}
+\item Compute $A = LL^T$, the Cholesky decomposition of the RBF matrix $A$.
+\item Compute the matrix $B = L^{-1} P$ and the vector $\vg = L^{-1} \vf$.
+\item Compute $B = \tilde{Q}\tilde{R}$, the QR decomposition of $B$.
+\item Solve for the polynomial coefficients $\vd$ as $\vd = \tilde{R}^{-1} \tilde{Q}^T \vg$.
+\item Solve for the RBF coefficients $\vc$ as $\vc = L^{-T}L^{-1}\lf(\vf - P \vd\rt)$.
+\end{enumerate}
+It is important to note that if $P$ is rank-deficient, $B$ is also. In such a case, one can replace the $QR$ decomposition with either its column-pivoted counterpart or with a truncated SVD. Regardless, once the coefficients are computed, the unified interpolant can be evaluated using \eqref{eq:poly_limit_eval}.
+%
 
-
-%\section{Unified interpolation on manifolds}
-%\label{sec:man_uni}
-%
-%One of the strengths of RBF interpolation is that it is applicable to interpolation of data sampled on a submanifold $\mathbb{M} \subset \mathbb{R}^d$ using pure Euclidean distances measured in $\mathbb{R}^d$. This feature has been used to develop spectral methods~\cite{FuselierWright2010, FuselierWright2014,FlyerWright09}. However, the inclusion of polynomial terms presents difficulties as the matrix $P$ may not have full rank if the manifold is algebraic. In this scenario, the linear algebra techniques presented above would fail even in the diagonal limit. We now present a technique based on least orthogonal interpolation (LOI) to overcome this. While LOI was used in the generation of RBF-based finite difference formulas (the RBF-LOI method)~\cite{SNKJCP2018,SWNJCP2020}, this is its first application to \emph{global} interpolation with RBFs and polynomials.
-%
-%\subsection{Least Orthogonal Interpolation (LOI)}
-%\label{sec:loi}
-%
-%\subsection{Global RBF-LOI}
-%\label{sec:rbfloi}
+\section{Unified Gaussian Process (UGPs) with Kernels and Polynomials}
+\label{sec:gp_uni}
