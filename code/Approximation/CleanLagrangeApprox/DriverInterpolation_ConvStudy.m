@@ -4,7 +4,7 @@
 
 
 %% Spatial dimension
-dim = 3;
+dim = 1;
 
 %% Load up the node set
 if dim==1
@@ -81,9 +81,9 @@ end
 if dim==1
     syms x;       
     %f = abs(x);
-    f = exp(-x.^(-2));    
+    %f = exp(-x.^(-2));    
     %f = 1./(1 + 16*x.^2);
-    %f = x.^(10);
+    f = x.^(10);
     dfx = diff(f,x);
 elseif dim==2
     syms x y;    

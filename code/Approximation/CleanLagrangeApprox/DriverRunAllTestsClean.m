@@ -354,13 +354,13 @@ for smoothness=1:3
         [~,dist] = knnsearch(tree,x,'k',2);
         dist = dist(:,2);
         dist = min(dist); %separation radius               
-        ep1 = 0.9/dist; %support = 1/ep        
+        ep1 = 0.9/dist; %support = dist/0.9        
         [el2_vs1(k,smoothness),elinf_vs1(k,smoothness),a_time_vs1(k,smoothness),e_time_vs1(k,smoothness),c_poly_vs1{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);    
         
         ep2 = 0.1/dist; %support = 1/ep        
         [el2_vs2(k,smoothness),elinf_vs2(k,smoothness),a_time_vs2(k,smoothness),e_time_vs2(k,smoothness),c_poly_vs2{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true);         
         
-        ep2 = 0.05/dist; %support = 1/ep        
+        ep3 = 0.05/dist; %support = 1/ep        
         [el2_vs3(k,smoothness),elinf_vs3(k,smoothness),a_time_vs3(k,smoothness),e_time_vs3(k,smoothness),c_poly_vs3{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);           
     end
 end
