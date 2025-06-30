@@ -291,7 +291,6 @@ for smoothness=1:3
 end
 
 %% Now get the variable shape parameter (aka fixed spatial support) strategies out of the way.
-%% Now do a couple of different fixed shape parameter strategies: a large one and a small one.
 %% Again, different smoothnesses
 for smoothness=1:3
     if smoothness==1
