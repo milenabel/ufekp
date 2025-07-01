@@ -4,7 +4,7 @@
 
 
 %% Spatial dimension
-dim = 3;
+dim = 2;
 
 %% Define RBF
 
@@ -47,7 +47,7 @@ end
 % end
 
 %% Type of boundary condition?
-bctype=2; %1-Dirichlet, 2-Neumann, 3- Robin
+bctype=1; %1-Dirichlet, 2-Neumann, 3- Robin
 
 %% This partially determines the number of polynomial terms
 if dim==1
@@ -410,7 +410,7 @@ for k=start_nodes:end_nodes
     elinf(k) = norm(sol-true_sol,inf)./norm(true_sol,inf)
 
 end
-save('Poisson_PolyReprod.mat','el2','elinf','sN','dim','deg','eps');
+%save('Poisson_PolyReprod.mat','el2','elinf','sN','dim','deg','eps');
 figure(1)
 semilogy(deg,el2,'LineWidth',2);
 hold on

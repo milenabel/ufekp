@@ -8,7 +8,7 @@
 
 
 %% Spatial dimension
-dim = 3;
+dim = 2;
 
 %% Define RBF
 

@@ -3,7 +3,7 @@
 
 
 %% Spatial dimension
-dim = 2;
+dim = 1;
 
 %% Load up the node set
 if dim==1
@@ -79,9 +79,9 @@ end
 %%with 2d and 3d analogues
 if dim==1
     syms x;       
-    %f = abs(x);
+    f = abs(x);
     %f = exp(-x.^(-2));    
-    f = 1./(1 + 16*x.^2);
+    %f = 1./(1 + 16*x.^2);
     %f = x.^(10);
     dfx = diff(f,x);
 elseif dim==2
@@ -271,20 +271,20 @@ for smoothness=1:3
         tree = KDTreeSearcher(x);
         [~,dist] = knnsearch(tree,x,'k',2);
         dist = dist(:,2);
-        dist = min(dist); %separation radius       
+        dist = 0.5*min(dist); %separation radius       
         if k==1 %fix under refinement
-            ep1 = 0.9/dist; %support = 1/ep
+            ep1 = 3.0/dist; %support = 1/ep
         end
         [el2_fs1(k,smoothness),elinf_fs1(k,smoothness),a_time_fs1(k,smoothness),e_time_fs1(k,smoothness),c_poly_fs1{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);    
         
         if k==1 %fix under refinement
-            ep2 = 0.1/dist; %support = 1/ep
+            ep2 = 2.5/dist; %support = 1/ep
         end
         [el2_fs2(k,smoothness),elinf_fs2(k,smoothness),a_time_fs2(k,smoothness),e_time_fs2(k,smoothness),c_poly_fs2{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true);            
         
         
         if k==1 %fix under refinement
-            ep3 = 0.05/dist; %support = 1/ep
+            ep3 = 2.0/dist; %support = 1/ep
         end
         [el2_fs3(k,smoothness),elinf_fs3(k,smoothness),a_time_fs3(k,smoothness),e_time_fs3(k,smoothness),c_poly_fs3{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);                  
     end
@@ -353,14 +353,14 @@ for smoothness=1:3
         tree = KDTreeSearcher(x);
         [~,dist] = knnsearch(tree,x,'k',2);
         dist = dist(:,2);
-        dist = min(dist); %separation radius               
-        ep1 = 0.9/dist; %support = dist/0.9        
+        dist = 0.5*min(dist); %separation radius               
+        ep1 = 2.0/dist; %support = dist/2.0        
         [el2_vs1(k,smoothness),elinf_vs1(k,smoothness),a_time_vs1(k,smoothness),e_time_vs1(k,smoothness),c_poly_vs1{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);    
         
-        ep2 = 0.1/dist; %support = 1/ep        
+        ep2 = 1.5/dist; %support = 1/ep        
         [el2_vs2(k,smoothness),elinf_vs2(k,smoothness),a_time_vs2(k,smoothness),e_time_vs2(k,smoothness),c_poly_vs2{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true);         
         
-        ep3 = 0.05/dist; %support = 1/ep        
+        ep3 = 1.1/dist; %support = 1/ep        
         [el2_vs3(k,smoothness),elinf_vs3(k,smoothness),a_time_vs3(k,smoothness),e_time_vs3(k,smoothness),c_poly_vs3{k,smoothness}] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);           
     end
 end
