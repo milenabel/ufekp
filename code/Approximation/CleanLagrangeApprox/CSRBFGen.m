@@ -1,4 +1,5 @@
-function [el2,elinf,a_time,e_time,c_poly,c_rbf] = CSRBFGen(x,y,ell,xe,alph,rbf,ep,tree,ye_true)
+function [el2,elinf,a_time,e_time,c_poly,cond_num,c_rbf, sparsity] = CSRBFGen(x,y,ell,xe,alph,rbf,ep,tree,ye_true)
+% function [el2,elinf,a_time,e_time,c_poly,c_rbf, sparsity] = CSRBFGen(x,y,ell,xe,alph,rbf,ep,tree,ye_true)
 %PLS General Interpolation with CSRBFs and polys
 
 dim = size(x,2);
@@ -25,6 +26,9 @@ g = dA\y;
 c_poly = linsolve(R,Q'*g,opts2);
 c_rbf = dA'\(g - dA\(V*c_poly));         
 a_time = toc;
+density   = nnz(A)/numel(A);
+sparsity  = 1 - density;  % degree of sparsity of the A matrix
+cond_num = condest(L_a);  
 
 tic
 rde = DistanceMatrixCSRBFwt(xe,x,ep,tree);
