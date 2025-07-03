@@ -399,44 +399,48 @@ for smoothness=1:3
         tree   = KDTreeSearcher(x);
         
         % precompute “natural” bracket in ε = 1/radius space
-        D2 = knnsearch(tree,x,'k',2); % N×2, second col = nearest neighbor dist
+        [~,D2] = knnsearch(tree,x,'k',2); % N×2, second col = nearest neighbor dist
         r = min(D2(:,2)); % separation radius
-        Dall = pdist(x);
-        diam = max(Dall); % diameter
+        diam = max(pdist(x)); % diameter
         ep_min = 1/diam;
         ep_max = 1/r;
         
         eps_vs = zeros(1,3);
         for j = 1:3
             s_t = s_targets(j);
+
+            ep_lo = ep_min;      % reset for each j
+            ep_hi = ep_max;
             
             % objective: sparsity(ε)−target = 0
-            fun = @(ep)(sum(cellfun(@numel, rangesearch(tree, x, 1/ep)))/(Nnodes^2)) - (1 - s_t);
+            fun = @(ep)(sum(cellfun(@numel, rangesearch(tree,x,1/ep)))/(Nnodes^2)) - (1-s_t);
             
-            % bracket
-            f_lo = fun(ep_min);
-            f_hi = fun(ep_max);
+            % bracket locally
+            f_lo = fun(ep_lo);
+            f_hi = fun(ep_hi);
             tries = 0;
             while f_lo * f_hi > 0 && tries < 5 % tried 10, 50, 100, 200;  none worked without error
-                ep_min = ep_min/2;
-                ep_max = ep_max*2;
-                f_lo = fun(ep_min);
-                f_hi = fun(ep_max);
+                ep_lo = ep_lo/2;
+                ep_hi = ep_hi*2;
+                f_lo = fun(ep_lo);
+                f_hi = fun(ep_hi);
                 tries = tries + 1;
             end
             
             if f_lo * f_hi <= 0
-                % now we can safely call fzero
-                eps_vs(j) = fzero(fun, [ep_min, ep_max], optimset('TolX',1e-4));
+                % fzero
+                eps_vs(j) = fzero(fun, [ep_lo, ep_hi], optimset('TolX',1e-4));
             else
                 warning('Couldn’t bracket $\epsilon$ for sparsity=%.2f; falling back to nearest endpoint', s_t, "latex");
                 % pick whichever endpoint gives smaller |fun|
                 if abs(f_lo) < abs(f_hi)
-                    eps_vs(j) = ep_min;
+                    eps_vs(j) = ep_lo;
                 else
-                    eps_vs(j) = ep_max;
+                    eps_vs(j) = ep_hi;
                 end
             end
+            % clamp to a PD epsilon
+            eps_vs(j) = clampToPD(eps_vs(j), x, tree, rbf);
         end
 
         ep1 = eps_vs(1);
@@ -450,6 +454,24 @@ for smoothness=1:3
         [el2_vs3(k,smoothness), elinf_vs3(k,smoothness), a_time_vs3(k,smoothness), e_time_vs3(k,smoothness), c_poly_vs3{k,smoothness}, cond_vs3(k,smoothness), ~, sparsity_vs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);
     end
 end
+
+function ep = clampToPD(ep_guess, x,tree,rbf)  % does not work for 5, 10, 100, 1000
+  max_tries = 1000; 
+  for t=1:max_tries
+    rd = DistanceMatrixCSRBFwt(x,x,ep_guess,tree);
+    A  = rbf(ep_guess, rd);
+    % try the Cholesky 
+    [L,p] = chol(A,'lower');
+    if p==0
+      ep = ep_guess; 
+      return
+    end
+    % otherwise reduce guess:
+    ep_guess = ep_guess * 0.8;  
+  end
+  error('Couldn’t find a PD ε after %d tries', max_tries);
+end
+
 
 %% Bisection for sparsity
 function ep = findEpForSparsity(x, tree, rbf, target, tol, sepR)
@@ -473,7 +495,7 @@ function ep = findEpForSparsity(x, tree, rbf, target, tol, sepR)
     
     N = size(x,1);
     
-    % clamp your search range to [0, sepR]
+    % clamp search range to [0, sepR]
     r_low  = 0;
     r_high = sepR;
     
