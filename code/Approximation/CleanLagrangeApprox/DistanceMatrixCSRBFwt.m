@@ -58,3 +58,4 @@
   idx = find(rowidx);
   DM = sparse(rowidx(idx),colidx(idx),validx(idx),N,M);
   
+  
