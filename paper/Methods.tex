@@ -241,7 +241,7 @@ where $B =L^{-1} P$. This is in fact a system of normal equations for $\vd$ that
 \item Compute the matrix $B = L^{-1} P$ and the vector $\vg = L^{-1} \vf$.
 \item Compute $B = \tilde{Q}\tilde{R}$, the QR decomposition of $B$.
 \item Solve for the polynomial coefficients $\vd$ as $\vd = \tilde{R}^{-1} \tilde{Q}^T \vg$.
-\item Solve for the RBF coefficients $\vc$ as $\vc = L^{-T}L^{-1}\lf(\vf - P \vd\rt)$.
+\item Solve for the RBF coefficients $\vc$ as $\vc = L^{-T} }\lf(\vg - B \vd\rt)$.
 \end{enumerate}
 It is important to note that if $P$ is rank-deficient, $B$ is also. In such a case, one can replace the $QR$ decomposition with either its column-pivoted counterpart or with a truncated SVD. Regardless, once the coefficients are computed, the unified interpolant can be evaluated using \eqref{eq:poly_limit_eval}.
 %
