@@ -3,7 +3,7 @@
 
 
 %% Spatial dimension
-dim = 2;
+dim = 1;
 
 %% Load up the node set
 if dim==1
@@ -288,7 +288,7 @@ for smoothness=1:3
         K_target = K_targets(j);
         current_fun = @(ep) log(condest(rbf(ep,DistanceMatrixCSRBFwt(x_finest,x_finest,ep,tree_finest))) / K_target);
         found= false;
-        
+
         for g = log_guesses
             try
                 c = fzero(current_fun, g, options);
@@ -302,7 +302,7 @@ for smoothness=1:3
             end
         end
         fprintf('For K_t=%.0e, found epsilon=%.4f\n', K_target, eps_fs(j));
-    
+
         if ~found
             % fallback: pick the grid‐point whose cond is *closest* to K_target
             rds = DistanceMatrixCSRBFwt(x_finest,x_finest,log_guesses,tree_finest);    %  N×N×12
@@ -315,7 +315,7 @@ for smoothness=1:3
 
     all_eps(smoothness,:) = eps_fs; 
 
-    
+
     %second version, comment out top after rbf starting with [~, D2]
     % for j = 1:3
     %     K_target = K_targets(j);
@@ -361,7 +361,7 @@ for smoothness=1:3
             y = f(x(:,1),x(:,2),x(:,3));
             ye_true = f(xe(:,1),xe(:,2),xe(:,3));
         end   
-        
+
         tree = KDTreeSearcher(x);
 
         % For K_target = 1e12 (j=1)
@@ -371,18 +371,20 @@ for smoothness=1:3
         % For K_target = 1e8 (j=2)
         ep2 = eps_fs(2);
         [el2_fs2(k,smoothness),elinf_fs2(k,smoothness),a_time_fs2(k,smoothness),e_time_fs2(k,smoothness),c_poly_fs2{k,smoothness}, cond_fs2(k,smoothness), ~, sparsity_fs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true); 
-        
+
         % For K_target = 1e4 (j=3)
         ep3 = eps_fs(3);
         [el2_fs3(k,smoothness),elinf_fs3(k,smoothness),a_time_fs3(k,smoothness),e_time_fs3(k,smoothness),c_poly_fs3{k,smoothness}, cond_fs3(k,smoothness), ~, sparsity_fs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);
     end
 end
 
+
+
 %% Now get the variable shape parameter (aka fixed level of sparsity) strategies out of the way.
 %% Again, different smoothnesses
 %s_targets = [0.1, 0.95, 0.99];    % three levels of sparsity to try
- s_targets = [0.40, 0.55, 0.70];    % 1 - s_target(i) is target sparsity value
-tolS = 1e-5;                        % your tight tolerance
+%  s_targets = [0.40, 0.55, 0.70];    % 1 - s_target(i) is target sparsity value
+% tolS = 1e-5;                        % your tight tolerance
 for smoothness=1:3
     if smoothness==1
         %% Wendland C2 in 3d, pd in all lower dimensions
@@ -424,6 +426,9 @@ for smoothness=1:3
         end
     end
 
+    K_targets = [1e12, 1e8, 1e4];
+    options.TolX = 1e-4;
+
     for k=start_nodes:end_nodes
         xi = st.fullintnodes{k};
         xb = st.bdrynodes{k};
@@ -444,75 +449,53 @@ for smoothness=1:3
             y = f(x(:,1),x(:,2),x(:,3));
             ye_true = f(xe(:,1),xe(:,2),xe(:,3));
         end    
-        % tree = KDTreeSearcher(x);
-        % [~,dist] = knnsearch(tree,x,'k',2);
-        % dist = dist(:,2);
-        % dist = 0.5*min(dist); %separation radius (smallest neighbor spacing (q))
-        % diam = norm(max(x)-min(x));  % largest inter‐point span (w)
-        % % diam = dist;
-        % 
-        % tolS = 1e-5;   % tolerance on sparsity
-        % ep1 = findEpForSparsity(x, tree, rbf, s_targets(1), tolS, diam);
-        % [el2_vs1(k,smoothness),elinf_vs1(k,smoothness),a_time_vs1(k,smoothness),e_time_vs1(k,smoothness),c_poly_vs1{k,smoothness}, ~, sparsity_vs1(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);
-        % 
-        % ep2 = findEpForSparsity(x, tree, rbf, s_targets(2), tolS, diam);
-        % [el2_vs2(k,smoothness),elinf_vs2(k,smoothness),a_time_vs2(k,smoothness),e_time_vs2(k,smoothness),c_poly_vs2{k,smoothness}, ~, sparsity_vs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true);
-        % 
-        % ep3 = findEpForSparsity(x, tree, rbf, s_targets(3), tolS, diam);       
-        % [el2_vs3(k,smoothness),elinf_vs3(k,smoothness),a_time_vs3(k,smoothness),e_time_vs3(k,smoothness),c_poly_vs3{k,smoothness}, ~, sparsity_vs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true); 
 
-        % assume: x, y, ell, xe, alph, rbf, ye_true, s_targets = [0.25,0.50,0.75]
-        tree   = KDTreeSearcher(x);
+        tree = KDTreeSearcher(x);
+
+        [~, D2] = knnsearch(tree, x, 'k', 2);
         
-        % precompute “natural” bracket in ε = 1/radius space
-        [~,D2] = knnsearch(tree,x,'k',2); % N×2, second col = nearest neighbor dist
-        r = min(D2(:,2)); % separation radius
-        diam = max(pdist(x)); % diameter
-        ep_min = 1/diam;
-        ep_max = 1/r;
-        
+        % Find epsilons for each condition number target
         eps_vs = zeros(1,3);
         for j = 1:3
-            s_t = s_targets(j);
-
-            ep_lo = ep_min;      % reset for each j
-            ep_hi = ep_max;
+            K_target = K_targets(j);
             
-            % objective: sparsity(ε)−target = 0
-            fun = @(ep)(sum(cellfun(@numel, rangesearch(tree,x,1/ep)))/(Nnodes^2)) - (1-s_t);
+            % Define the condition number function
+            cond_func = @(ep) cond_number_estimation(ep, x, tree, rbf);
+            target_func = @(ep) log(cond_func(ep)/K_target);
             
-            % bracket locally
-            f_lo = fun(ep_lo);
-            f_hi = fun(ep_hi);
-            tries = 0;
-            while f_lo * f_hi > 0 && tries < 5 % tried 10, 50, 100, 200;  none worked without error
-                ep_lo = ep_lo/2;
-                ep_hi = ep_hi*2;
-                f_lo = fun(ep_lo);
-                f_hi = fun(ep_hi);
-                tries = tries + 1;
-            end
+            % Set up search range
+            ep_lo = 1/max(pdist(x));    % very flat
+            ep_hi = 1/min(D2(:,2));     % very peaked
+            log_guesses = logspace(log10(ep_lo), log10(ep_hi), 12);
             
-            if f_lo * f_hi <= 0
-                % fzero
-                eps_vs(j) = fzero(fun, [ep_lo, ep_hi], optimset('TolX',1e-4));
-            else
-                warning('Couldn’t bracket $\epsilon$ for sparsity=%.2f; falling back to nearest endpoint', s_t, "latex");
-                % pick whichever endpoint gives smaller |fun|
-                if abs(f_lo) < abs(f_hi)
-                    eps_vs(j) = ep_lo;
-                else
-                    eps_vs(j) = ep_hi;
+            found = false;
+            for g = log_guesses
+                try
+                    eps_vs(j) = fzero(target_func, g, options);
+                    if eps_vs(j) > 0
+                        found = true;
+                        break;
+                    end
+                catch
+                    % try next guess
                 end
             end
-            % clamp to a PD epsilon
-            eps_vs(j) = clampToPD(eps_vs(j), x, tree, rbf);
+            
+            if ~found
+                % fallback: evaluate condition numbers at guesses
+                conds = arrayfun(@(g) cond_func(g), log_guesses);
+                [~, idx] = min(abs(log(conds) - log(K_target)));
+                eps_vs(j) = log_guesses(idx);
+                warning('No root found for K_t=%.0e; using ε=%.4g which gives cond≈%.2e', K_target, eps_vs(j), conds(idx));
+            end
+            
+            fprintf('For node set %d, smoothness %d, K_t=%.0e, found epsilon=%.4f\n', k, smoothness, K_target, eps_vs(j));
         end
 
         ep1 = eps_vs(1);
         ep2 = eps_vs(2);
         ep3 = eps_vs(3);
-        
+
         [el2_vs1(k,smoothness), elinf_vs1(k,smoothness), a_time_vs1(k,smoothness), e_time_vs1(k,smoothness), c_poly_vs1{k,smoothness}, cond_vs1(k,smoothness), ~, sparsity_vs1(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);
         
         [el2_vs2(k,smoothness), elinf_vs2(k,smoothness), a_time_vs2(k,smoothness),  e_time_vs2(k,smoothness), c_poly_vs2{k,smoothness}, cond_vs2(k,smoothness), ~, sparsity_vs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true);
@@ -521,9 +504,30 @@ for smoothness=1:3
     end
 end
 
+% Helper function for condition number estimation
+function condA = cond_number_estimation(ep, x, tree, rbf)
+    A = rbf(ep, DistanceMatrixCSRBFwt(x,x,ep,tree));
+    
+    if issparse(A)
+        % For sparse matrices, use svds to estimate largest and smallest singular values
+        s_max = svds(A, 1, 'largest');
+        s_min = svds(A, 1, 'smallest');
+        condA = s_max/s_min;
+    else
+        % For dense matrices, use regular svd
+        s = svd(A);
+        condA = max(s)/min(s);
+    end
+    
+    % Fallback to condest if svds fails or gives unreasonable results
+    if isnan(condA) || isinf(condA) || condA < 1
+        condA = condest(A);
+    end
+end
+
 
 %% Bisection for sparsity
-function ep = findEpForSparsity(x, tree, rbf, target, tol, sepR)
+% function ep = findEpForSparsity(x, tree, rbf, target, tol, sepR)
 % findEpForSparsity  binary‐searches for ep=1/r so that nnz(A)/numel(A) ≈ target
 %
 % Inputs:
@@ -536,36 +540,36 @@ function ep = findEpForSparsity(x, tree, rbf, target, tol, sepR)
 %
 % Output:
 %   ep     : shape parameter (1/r_mid) that yields sparsity ≈ target
-
-    if nargin<5, tol = 1e-5; end
-    if nargin<6
-        error('You must pass sepR (the separation radius) as the 6th argument.');
-    end
-    
-    N = size(x,1);
-    
-    % clamp search range to [0, sepR]
-    r_low  = 0;
-    r_high = sepR;
-    
-    for iter = 1:200
-    % while true
-        r_mid = 0.5*(r_low + r_high);
-        % count nnz entries: how many neighbors within r_mid (including self)
-        neigh = rangesearch(tree, x, r_mid);
-        total_nz = sum(cellfun(@numel, neigh));  
-        spars = 1 - (total_nz )/ (N^2);
-        
-        if abs(spars - target) < tol
-        break;
-        elseif spars > target
-            r_high = r_mid;
-        else
-            r_low  = r_mid;
-        end
-        ep = 1 / r_mid;
-    end
-end
+% 
+%     if nargin<5, tol = 1e-5; end
+%     if nargin<6
+%         error('You must pass sepR (the separation radius) as the 6th argument.');
+%     end
+% 
+%     N = size(x,1);
+% 
+%     % clamp search range to [0, sepR]
+%     r_low  = 0;
+%     r_high = sepR;
+% 
+%     for iter = 1:200
+%     % while true
+%         r_mid = 0.5*(r_low + r_high);
+%         % count nnz entries: how many neighbors within r_mid (including self)
+%         neigh = rangesearch(tree, x, r_mid);
+%         total_nz = sum(cellfun(@numel, neigh));  
+%         spars = 1 - (total_nz )/ (N^2);
+% 
+%         if abs(spars - target) < tol
+%         break;
+%         elseif spars > target
+%             r_high = r_mid;
+%         else
+%             r_low  = r_mid;
+%         end
+%         ep = 1 / r_mid;
+%     end
+% end
 
 %% Save results 
 % Timestamp for uniqueness
