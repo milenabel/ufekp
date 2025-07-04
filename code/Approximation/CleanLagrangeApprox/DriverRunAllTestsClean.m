@@ -3,7 +3,7 @@
 
 
 %% Spatial dimension
-dim = 1;
+dim = 2;
 
 %% Load up the node set
 if dim==1
@@ -94,11 +94,11 @@ if dim==1
     dfx = diff(f,x);
 elseif dim==2
     syms x y;    
-    f = abs(x).^3 .* abs(y).^3;              function_name = 'abs3x3_2d';
+    %f = abs(x).^3 .* abs(y).^3;              function_name = 'abs3x3_2d';
     %f = exp(-x.^(-2)).*exp(-y.^(-2));        function_name = 'gauss_2d';
     %f = 1./(1 + 25*(x.^2 + y.^2));           function_name = 'rational_2d';
     %%f = exp(-10*((x-.3).^(-2)+y.^(-2)));    function_name = 'gauss10_2d';
-    %f = exp(-10*((x-.3).^2+y.^2));           function_name = 'gauss10inv_2d';
+    f = exp(-10*((x-.3).^2+y.^2));           function_name = 'gauss10inv_2d';
     %f = x.^8 .* y.^8;                        function_name = 'poly8x8_2d';
     dfx = diff(f,x); dfy = diff(f,y);
 elseif dim==3
@@ -260,37 +260,89 @@ for smoothness=1:3
     end
 
     % three picked condition‐number targets
-    K_targets = [1e4, 1e8, 1e12];
-    
-    % build x_fine / y_fine / tree_fine from the finest node‐set
-    x_fine  = [st.fullintnodes{end_nodes}; st.bdrynodes{end_nodes} ];
-    y_fine  = f(x_fine(:,1), x_fine(:,2));        % or f(x) in 1D
-    tree_fine = KDTreeSearcher(x_fine);
-    
-    % precompute a single distance‐matrix template at epsilon=1
-    rd0 = DistanceMatrixCSRBFwt(x_fine, x_fine, 1, tree_fine);
-    
-    % define the function for fzero:  log(condest(A(ep))) - log(Kt)==0
-    ep_fun = @(ep, Kt) log(condest(rbf(ep,rd0))) - log(Kt);
-    
-    % bracket/fzero only on the fine set, for each K_target
-    ep_fs = zeros(1,3);
-    [~, D2] = knnsearch(tree_fine, x_fine, 'k', 2);
-    ep_lo0 = 1/max(pdist(x_fine));    % very flat → small cond
-    ep_hi0 = 1/min(D2(:,2));         % very peaked→ large cond
-    for j=1:3
-        Kt = K_targets(j);
-        % reasonable bracket guesses:
-        eep_lo = ep_lo0;  ep_hi = ep_hi0;
-        f_lo  = ep_fun(ep_lo, Kt);
-        f_hi  = ep_fun(ep_hi, Kt);
-        if f_lo * f_hi > 0
-            error('Couldn''t bracket cond target %g', Kt);
-        end
+    K_targets = [1e12, 1e8, 1e4];
 
-        ep_fs(j) = fzero(@(e) ep_fun(e,Kt), [ep_lo, ep_hi], optimset('TolX',1e-4));
+    % Find the epsilons for each K_target on the finest node set
+    k_finest = end_nodes;
+
+    xi = st.fullintnodes{k_finest};
+    xb = st.bdrynodes{k_finest};
+    x_finest = [xi;xb];
+    tree_finest = KDTreeSearcher(x_finest);
+
+    % Function to find epsilon that gives target condition number
+    ep_func = @(K_target) @(ep) log(condest(rbf(ep,DistanceMatrixCSRBFwt(x_finest,x_finest,ep,tree_finest))) / K_target);
+    % ep_func = @(ep,x,xc,tc) log(condest(rbf(ep,DistanceMatrixCSRBFwt(x,xc,ep,tree))) / tc ); % from dummy
+
+    % options = optimset('TolX',1e-4);
+    options.TolX = 1e-4;
+    eps_fs = zeros(1,3);
+
+
+    [~, D2]    = knnsearch(tree_finest, x_finest, 'k',2);
+    ep_lo0     = 1/max(pdist(x_finest));    % very flat
+    ep_hi0     = 1/min(D2(:,2));           % very peaked
+    log_guesses = logspace(log10(ep_lo0), log10(ep_hi0), 12);
+
+    for j = 1:3
+        K_target = K_targets(j);
+        current_fun = @(ep) log(condest(rbf(ep,DistanceMatrixCSRBFwt(x_finest,x_finest,ep,tree_finest))) / K_target);
+        found= false;
+        
+        for g = log_guesses
+            try
+                c = fzero(current_fun, g, options);
+                if c>0
+                    eps_fs(j) = c;
+                    found     = true;
+                    break;
+                end
+            catch
+                % try next guess
+            end
+        end
+        fprintf('For K_t=%.0e, found epsilon=%.4f\n', K_target, eps_fs(j));
+    
+        if ~found
+            % fallback: pick the grid‐point whose cond is *closest* to K_target
+            rds = DistanceMatrixCSRBFwt(x_finest,x_finest,log_guesses,tree_finest);    %  N×N×12
+            conds = arrayfun(@(k) condest(rbf(log_guesses(k),rds(:,:,k))), 1:12);
+            [~, idx] = min(abs(log(conds) - log(K_target)));
+            eps_fs(j) = log_guesses(idx);
+            warning('No root found for K_t=%.0e; using ε=%.4g which gives cond≈%.2e', K_target, eps_fs(j), conds(idx));
+        end
     end
 
+    all_eps(smoothness,:) = eps_fs; 
+
+    
+    %second version, comment out top after rbf starting with [~, D2]
+    % for j = 1:3
+    %     K_target = K_targets(j);
+    %     current_ep_func = ep_func(K_target);
+    % 
+    %     % guesses = [1, 5, 10, 20, 30, 50, 80, 100, 150, 200, 250]; 
+    %     found = false;
+    %     for g = 1:length(guesses)
+    %         try
+    %             eps_fs(j) = fzero(current_ep_func, guesses(g), options);
+    %             % Verify the found epsilon is positive
+    %             if eps_fs(j) > 0
+    %                 found = true;
+    %                 break;
+    %             end
+    %         catch
+    %             continue; % Try next guess
+    %         end
+    %     end
+    % 
+    %     if ~found
+    %         warning('Failed to find valid epsilon for K_t=%.0e after %d attempts', K_target, length(guesses));
+    %         eps_fs(j) = 1; % Fallback value 
+    %     end
+    % 
+    %     fprintf('For K_t=%.0e, found epsilon=%.4f\n', K_target, eps_fs(j));
+    % end
 
     for k=start_nodes:end_nodes
         xi = st.fullintnodes{k};
@@ -309,21 +361,20 @@ for smoothness=1:3
             y = f(x(:,1),x(:,2),x(:,3));
             ye_true = f(xe(:,1),xe(:,2),xe(:,3));
         end   
+        
+        tree = KDTreeSearcher(x);
 
-        xk = [ st.fullintnodes{k}; st.bdrynodes{k} ];
-        yk = f( xk(:,1), xk(:,2) );   % or f(xk) in 1D
-        
-        tree_k = KDTreeSearcher(xk);
-        for j = 1:3
-            ep = ep_fs(j);
-            [el2_fs(j), elinf_fs(j), a_time_fs(j), e_time_fs(j), c_poly_fs{j}, cond_fs(j), ~, sparsity_fs(j)] = CSRBFGen(xk, yk, ell, xe, alph, rbf, ep, tree_k, ye_true);
-        end
-        
-        % store el2_fs(1)→el2_fs1(k,smoothness), etc.
-        [el2_fs1(k,smoothness),elinf_fs1(k,smoothness),a_time_fs1(k,smoothness),e_time_fs1(k,smoothness),c_poly_fs1{k,smoothness}, cond_fs1(k,smoothness), ~, sparsity_fs1(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);       
+        % For K_target = 1e12 (j=1)
+        ep1 = eps_fs(1);
+        [el2_fs1(k,smoothness), elinf_fs1(k,smoothness), a_time_fs1(k,smoothness), e_time_fs1(k,smoothness), c_poly_fs1{k,smoothness}, cond_fs1(k,smoothness), ~, sparsity_fs1(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);
+
+        % For K_target = 1e8 (j=2)
+        ep2 = eps_fs(2);
         [el2_fs2(k,smoothness),elinf_fs2(k,smoothness),a_time_fs2(k,smoothness),e_time_fs2(k,smoothness),c_poly_fs2{k,smoothness}, cond_fs2(k,smoothness), ~, sparsity_fs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true); 
+        
+        % For K_target = 1e4 (j=3)
+        ep3 = eps_fs(3);
         [el2_fs3(k,smoothness),elinf_fs3(k,smoothness),a_time_fs3(k,smoothness),e_time_fs3(k,smoothness),c_poly_fs3{k,smoothness}, cond_fs3(k,smoothness), ~, sparsity_fs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);
-
     end
 end
 
@@ -468,23 +519,6 @@ for smoothness=1:3
         
         [el2_vs3(k,smoothness), elinf_vs3(k,smoothness), a_time_vs3(k,smoothness), e_time_vs3(k,smoothness), c_poly_vs3{k,smoothness}, cond_vs3(k,smoothness), ~, sparsity_vs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);
     end
-end
-
-function ep = clampToPD(ep_guess, x,tree,rbf)  % does not work for 5, 10, 100, 1000
-  max_tries = 1000; 
-  for t=1:max_tries
-    rd = DistanceMatrixCSRBFwt(x,x,ep_guess,tree);
-    A  = rbf(ep_guess, rd);
-    % try the Cholesky 
-    [L,p] = chol(A,'lower');
-    if p==0
-      ep = ep_guess; 
-      return
-    end
-    % otherwise reduce guess:
-    ep_guess = ep_guess * 0.8;  
-  end
-  error('Couldn’t find a PD ε after %d tries', max_tries);
 end
 
 
