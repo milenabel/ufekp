@@ -3,7 +3,7 @@
 
 
 %% Spatial dimension
-dim = 2;
+dim = 1;
 
 %% Load up the node set
 if dim==1
@@ -307,7 +307,7 @@ for smoothness=1:3
             y = f(x(:,1),x(:,2),x(:,3));
             ye_true = f(xe(:,1),xe(:,2),xe(:,3));
         end   
-        
+
         tree = KDTreeSearcher(x);
 
         % For K_target = 1e12 (j=1)
@@ -317,7 +317,7 @@ for smoothness=1:3
         % For K_target = 1e8 (j=2)
         ep2 = eps_fs(2);
         [el2_fs2(k,smoothness),elinf_fs2(k,smoothness),a_time_fs2(k,smoothness),e_time_fs2(k,smoothness),c_poly_fs2{k,smoothness}, cond_fs2(k,smoothness), ~, sparsity_fs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true); 
-        
+
         % For K_target = 1e4 (j=3)
         ep3 = eps_fs(3);
         [el2_fs3(k,smoothness),elinf_fs3(k,smoothness),a_time_fs3(k,smoothness),e_time_fs3(k,smoothness),c_poly_fs3{k,smoothness}, cond_fs3(k,smoothness), ~, sparsity_fs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);
@@ -327,6 +327,7 @@ end
 %% Now do fixed condition number strategies
 %% Again, different smoothnesses
 K_targets = [1e12, 1e8, 1e4]; 
+
 for smoothness=1:3
     if smoothness==1
         %% Wendland C2 in 3d, pd in all lower dimensions
@@ -367,6 +368,8 @@ for smoothness=1:3
             lrbf = @(e,r) (1277696559217977405.*e.^2.*r.^8.*(1540.*r.^2 - 1056.*r - 980.*r.^3 + 231.*r.^4 + 264*spones(r)))./16380725118179198;
         end
     end
+
+    options.TolX = 1e-4;
 
     for k=start_nodes:end_nodes
         xi = st.fullintnodes{k};
@@ -410,7 +413,7 @@ for smoothness=1:3
         ep1 = eps_vs(1);
         ep2 = eps_vs(2);
         ep3 = eps_vs(3);
-        
+
         [el2_vs1(k,smoothness), elinf_vs1(k,smoothness), a_time_vs1(k,smoothness), e_time_vs1(k,smoothness), c_poly_vs1{k,smoothness}, cond_vs1(k,smoothness), ~, sparsity_vs1(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);
         
         [el2_vs2(k,smoothness), elinf_vs2(k,smoothness), a_time_vs2(k,smoothness),  e_time_vs2(k,smoothness), c_poly_vs2{k,smoothness}, cond_vs2(k,smoothness), ~, sparsity_vs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true);
@@ -419,51 +422,6 @@ for smoothness=1:3
     end
 end
 
-
-%% Bisection for sparsity
-function ep = findEpForSparsity(x, tree, rbf, target, tol, sepR)
-% findEpForSparsity  binary‐searches for ep=1/r so that nnz(A)/numel(A) ≈ target
-%
-% Inputs:
-%   x      : N×d array of node coordinates
-%   tree   : KDTreeSearcher built on x
-%   rbf    : function handle @(ep,distances)->RBF values
-%   target : desired fraction of nonzero A‐entries (0<target<1)
-%   tol    : allowable error in achieved sparsity (e.g. 1e-5)
-%   sepR   : maximum search radius (the separation radius)
-%
-% Output:
-%   ep     : shape parameter (1/r_mid) that yields sparsity ≈ target
-
-    if nargin<5, tol = 1e-5; end
-    if nargin<6
-        error('You must pass sepR (the separation radius) as the 6th argument.');
-    end
-    
-    N = size(x,1);
-    
-    % clamp search range to [0, sepR]
-    r_low  = 0;
-    r_high = sepR;
-    
-    for iter = 1:200
-    % while true
-        r_mid = 0.5*(r_low + r_high);
-        % count nnz entries: how many neighbors within r_mid (including self)
-        neigh = rangesearch(tree, x, r_mid);
-        total_nz = sum(cellfun(@numel, neigh));  
-        spars = 1 - (total_nz )/ (N^2);
-        
-        if abs(spars - target) < tol
-        break;
-        elseif spars > target
-            r_high = r_mid;
-        else
-            r_low  = r_mid;
-        end
-        ep = 1 / r_mid;
-    end
-end
 
 %% Save results 
 % Timestamp for uniqueness
