@@ -216,8 +216,7 @@ for smoothness=1:3
     end
 end
 
-%% Now do a couple of different fixed shape parameter strategies: a large one and a small one.
-%% Again, different smoothnesses
+%% Now do 3 different sparsity levels, chosen purely by the node sets
 for smoothness=1:3
     if smoothness==1
         %% Wendland C2 in 3d, pd in all lower dimensions
@@ -259,91 +258,32 @@ for smoothness=1:3
         end
     end
 
-    % three picked condition‐number targets
-    K_targets = [1e12, 1e8, 1e4];
-
-    % Find the epsilons for each K_target on the finest node set
+   %% Find the epsilons for each K_target on the finest node set
     k_finest = end_nodes;
 
     xi = st.fullintnodes{k_finest};
     xb = st.bdrynodes{k_finest};
     x_finest = [xi;xb];
     tree_finest = KDTreeSearcher(x_finest);
-
-    % Function to find epsilon that gives target condition number
-    ep_func = @(K_target) @(ep) log(condest(rbf(ep,DistanceMatrixCSRBFwt(x_finest,x_finest,ep,tree_finest))) / K_target);
-    % ep_func = @(ep,x,xc,tc) log(condest(rbf(ep,DistanceMatrixCSRBFwt(x,xc,ep,tree))) / tc ); % from dummy
-
-    % options = optimset('TolX',1e-4);
-    options.TolX = 1e-4;
-    eps_fs = zeros(1,3);
-
-
-    [~, D2]    = knnsearch(tree_finest, x_finest, 'k',2);
-    ep_lo0     = 1/max(pdist(x_finest));    % very flat
-    ep_hi0     = 1/min(D2(:,2));           % very peaked
-    log_guesses = logspace(log10(ep_lo0), log10(ep_hi0), 12);
-
-    for j = 1:3
-        K_target = K_targets(j);
-        current_fun = @(ep) log(condest(rbf(ep,DistanceMatrixCSRBFwt(x_finest,x_finest,ep,tree_finest))) / K_target);
-        found= false;
-        
-        for g = log_guesses
-            try
-                c = fzero(current_fun, g, options);
-                if c>0
-                    eps_fs(j) = c;
-                    found     = true;
-                    break;
-                end
-            catch
-                % try next guess
-            end
-        end
-        fprintf('For K_t=%.0e, found epsilon=%.4f\n', K_target, eps_fs(j));
+    [~,dist] = knnsearch(tree_finest,x_finest,'k',2);
+    sep_dist = 0.5*min(dist(:,2));
     
-        if ~found
-            % fallback: pick the grid‐point whose cond is *closest* to K_target
-            rds = DistanceMatrixCSRBFwt(x_finest,x_finest,log_guesses,tree_finest);    %  N×N×12
-            conds = arrayfun(@(k) condest(rbf(log_guesses(k),rds(:,:,k))), 1:12);
-            [~, idx] = min(abs(log(conds) - log(K_target)));
-            eps_fs(j) = log_guesses(idx);
-            warning('No root found for K_t=%.0e; using ε=%.4g which gives cond≈%.2e', K_target, eps_fs(j), conds(idx));
-        end
+    %% Milena: this works
+    % guess an eigenvalue. 3 here is the dim of the Wendland kernel (always 3 in this code)
+    % the fourier transform of the Wendland kernel
+    % decays at this rate (p), so the eigenvalues must satisfy this on a given
+    % point set. This should give us a good guess and possibly a bracket
+    p = 2*smoothness + 3 + 1; 
+    eps_guess = K_targets.^(-1./p)/sep_dist; 
+    eps_fs = zeros(size(eps_guess));  
+    options.TolX = 1e-2; %loose tolerance for speed
+    for kit=1:3        
+        eps0 = eps_guess(kit);
+        k_target = K_targets(kit);
+        ep_func = @(ep) log10( cond(full(rbf(ep,DistanceMatrixCSRBFwt(x_finest,x_finest,ep,tree_finest))))) - log10(k_target);
+        eps_fs(kit) = fzero(ep_func,[eps0*0.01,eps0*10],options); % a bracketed search
     end
-
     all_eps(smoothness,:) = eps_fs; 
-
-    
-    %second version, comment out top after rbf starting with [~, D2]
-    % for j = 1:3
-    %     K_target = K_targets(j);
-    %     current_ep_func = ep_func(K_target);
-    % 
-    %     % Try with reasonable initial guesses
-    %     % guesses = [1, 5, 10, 20, 30, 50, 80, 100, 150, 200, 250]; 
-    %     found = false;
-    %     for g = 1:length(guesses)
-    %         try
-    %             eps_fs(j) = fzero(current_ep_func, guesses(g), options);
-    %             % Verify the found epsilon is positive
-    %             if eps_fs(j) > 0
-    %                 found = true;
-    %                 break;
-    %             end
-    %         catch
-    %             continue; % Try next guess
-    %         end
-    %     end
-    % 
-    %     if ~found
-    %         warning('Failed to find valid epsilon for K_t=%.0e after %d attempts', K_target, length(guesses));
-    %         eps_fs(j) = 1; % Fallback value 
-    %     end
-    % 
-    %     fprintf('For K_t=%.0e, found epsilon=%.4f\n', K_target, eps_fs(j));
-    % end
 
     for k=start_nodes:end_nodes
         xi = st.fullintnodes{k};
@@ -365,7 +305,7 @@ for smoothness=1:3
         
         tree = KDTreeSearcher(x);
 
-        % For K_target = 1e4 (j=1)
+        % For K_target = 1e12 (j=1)
         ep1 = eps_fs(1);
         [el2_fs1(k,smoothness), elinf_fs1(k,smoothness), a_time_fs1(k,smoothness), e_time_fs1(k,smoothness), c_poly_fs1{k,smoothness}, cond_fs1(k,smoothness), ~, sparsity_fs1(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);
 
@@ -373,17 +313,15 @@ for smoothness=1:3
         ep2 = eps_fs(2);
         [el2_fs2(k,smoothness),elinf_fs2(k,smoothness),a_time_fs2(k,smoothness),e_time_fs2(k,smoothness),c_poly_fs2{k,smoothness}, cond_fs2(k,smoothness), ~, sparsity_fs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true); 
         
-        % For K_target = 1e12 (j=3)
+        % For K_target = 1e4 (j=3)
         ep3 = eps_fs(3);
         [el2_fs3(k,smoothness),elinf_fs3(k,smoothness),a_time_fs3(k,smoothness),e_time_fs3(k,smoothness),c_poly_fs3{k,smoothness}, cond_fs3(k,smoothness), ~, sparsity_fs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);
     end
 end
 
-%% Now get the variable shape parameter (aka fixed level of sparsity) strategies out of the way.
+%% Now do fixed condition number strategies
 %% Again, different smoothnesses
-%s_targets = [0.1, 0.95, 0.99];    % three levels of sparsity to try
- s_targets = [0.40, 0.55, 0.70];    % 1 - s_target(i) is target sparsity value
-tolS = 1e-5;                        % your tight tolerance
+K_targets = [1e12, 1e8, 1e4]; 
 for smoothness=1:3
     if smoothness==1
         %% Wendland C2 in 3d, pd in all lower dimensions
@@ -445,71 +383,25 @@ for smoothness=1:3
             y = f(x(:,1),x(:,2),x(:,3));
             ye_true = f(xe(:,1),xe(:,2),xe(:,3));
         end    
-        % tree = KDTreeSearcher(x);
-        % [~,dist] = knnsearch(tree,x,'k',2);
-        % dist = dist(:,2);
-        % dist = 0.5*min(dist); %separation radius (smallest neighbor spacing (q))
-        % diam = norm(max(x)-min(x));  % largest inter‐point span (w)
-        % % diam = dist;
-        % 
-        % tolS = 1e-5;   % tolerance on sparsity
-        % ep1 = findEpForSparsity(x, tree, rbf, s_targets(1), tolS, diam);
-        % [el2_vs1(k,smoothness),elinf_vs1(k,smoothness),a_time_vs1(k,smoothness),e_time_vs1(k,smoothness),c_poly_vs1{k,smoothness}, ~, sparsity_vs1(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep1,tree,ye_true);
-        % 
-        % ep2 = findEpForSparsity(x, tree, rbf, s_targets(2), tolS, diam);
-        % [el2_vs2(k,smoothness),elinf_vs2(k,smoothness),a_time_vs2(k,smoothness),e_time_vs2(k,smoothness),c_poly_vs2{k,smoothness}, ~, sparsity_vs2(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep2,tree,ye_true);
-        % 
-        % ep3 = findEpForSparsity(x, tree, rbf, s_targets(3), tolS, diam);       
-        % [el2_vs3(k,smoothness),elinf_vs3(k,smoothness),a_time_vs3(k,smoothness),e_time_vs3(k,smoothness),c_poly_vs3{k,smoothness}, ~, sparsity_vs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true); 
-
-        % assume: x, y, ell, xe, alph, rbf, ye_true, s_targets = [0.25,0.50,0.75]
-        tree   = KDTreeSearcher(x);
+        tree  = KDTreeSearcher(x);    
+        [~,dist] = knnsearch(tree,x,'k',2);
+        sep_dist = 0.5*min(dist(:,2));
         
-        % precompute “natural” bracket in ε = 1/radius space
-        [~,D2] = knnsearch(tree,x,'k',2); % N×2, second col = nearest neighbor dist
-        r = min(D2(:,2)); % separation radius
-        diam = max(pdist(x)); % diameter
-        ep_min = 1/diam;
-        ep_max = 1/r;
-        
-        eps_vs = zeros(1,3);
-        for j = 1:3
-            s_t = s_targets(j);
-
-            ep_lo = ep_min;      % reset for each j
-            ep_hi = ep_max;
-            
-            % objective: sparsity(ε)−target = 0
-            fun = @(ep)(sum(cellfun(@numel, rangesearch(tree,x,1/ep)))/(Nnodes^2)) - (1-s_t);
-            
-            % bracket locally
-            f_lo = fun(ep_lo);
-            f_hi = fun(ep_hi);
-            tries = 0;
-            while f_lo * f_hi > 0 && tries < 5 % tried 10, 50, 100, 200;  none worked without error
-                ep_lo = ep_lo/2;
-                ep_hi = ep_hi*2;
-                f_lo = fun(ep_lo);
-                f_hi = fun(ep_hi);
-                tries = tries + 1;
-            end
-            
-            if f_lo * f_hi <= 0
-                % fzero
-                eps_vs(j) = fzero(fun, [ep_lo, ep_hi], optimset('TolX',1e-4));
-            else
-                warning('Couldn’t bracket $\epsilon$ for sparsity=%.2f; falling back to nearest endpoint', s_t, "latex");
-                % pick whichever endpoint gives smaller |fun|
-                if abs(f_lo) < abs(f_hi)
-                    eps_vs(j) = ep_lo;
-                else
-                    eps_vs(j) = ep_hi;
-                end
-            end
-            % clamp to a PD epsilon
-            eps_vs(j) = clampToPD(eps_vs(j), x, tree, rbf);
+        %% Milena: CHECK if this works
+        % guess an eigenvalue. 3 here is the dim of the Wendland kernel (always 3 in this code)
+        % the fourier transform of the Wendland kernel
+        % decays at this rate (p), so the eigenvalues must satisfy this on a given
+        % point set. This should give us a good guess and possibly a bracket
+        p = 2*smoothness + 3 + 1; 
+        eps_guess = K_targets.^(-1./p)/sep_dist; 
+        eps_vs = zeros(size(eps_guess));  
+        options.TolX = 1e-2; %loose tolerance for speed
+        for kit=1:3        
+            eps0 = eps_guess(kit);
+            k_target = K_targets(kit);
+            ep_func = @(ep) log10( cond(full(rbf(ep,DistanceMatrixCSRBFwt(x,x,ep,tree))))) - log10(k_target);
+            eps_vs(kit) = fzero(ep_func,[eps0*0.01,eps0*10],options); % a bracketed search
         end
-
         ep1 = eps_vs(1);
         ep2 = eps_vs(2);
         ep3 = eps_vs(3);
