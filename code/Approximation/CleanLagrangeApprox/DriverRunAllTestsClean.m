@@ -272,6 +272,9 @@ for smoothness=1:3
     tree_finest = KDTreeSearcher(x_finest);
     [~,dist] = knnsearch(tree_finest,x_finest,'k',2);
     sep_dist = 0.5*min(dist(:,2));
+    if dim==1
+        sep_dist = 0.5*mean(dist(:,2));
+    end
     
     %% Milena: this works
     % guess an eigenvalue. 3 here is the dim of the Wendland kernel (always 3 in this code)
