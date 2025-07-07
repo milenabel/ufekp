@@ -3,7 +3,7 @@
 
 
 %% Spatial dimension
-dim = 1;
+dim = 2;
 
 %% Load up the node set
 if dim==1
@@ -96,9 +96,9 @@ elseif dim==2
     syms x y;    
     %f = abs(x).^3 .* abs(y).^3;              function_name = 'abs3x3_2d';
     %f = exp(-x.^(-2)).*exp(-y.^(-2));        function_name = 'gauss_2d';
-    %f = 1./(1 + 25*(x.^2 + y.^2));           function_name = 'rational_2d';
+    f = 1./(1 + 25*(x.^2 + y.^2));           function_name = 'rational_2d';
     %%f = exp(-10*((x-.3).^(-2)+y.^(-2)));    function_name = 'gauss10_2d';
-    f = exp(-10*((x-.3).^2+y.^2));           function_name = 'gauss10inv_2d';
+    %f = exp(-10*((x-.3).^2+y.^2));           function_name = 'gauss10inv_2d';
     %f = x.^8 .* y.^8;                        function_name = 'poly8x8_2d';
     dfx = diff(f,x); dfy = diff(f,y);
 elseif dim==3
@@ -275,7 +275,7 @@ for smoothness=1:3
     if dim==1
         sep_dist = 0.5*mean(dist(:,2));
     end
-    
+
     %% Milena: this works
     % guess an eigenvalue. 3 here is the dim of the Wendland kernel (always 3 in this code)
     % the fourier transform of the Wendland kernel
@@ -291,7 +291,7 @@ for smoothness=1:3
         ep_func = @(ep) log10( cond(full(rbf(ep,DistanceMatrixCSRBFwt(x_finest,x_finest,ep,tree_finest))))) - log10(k_target);
         eps_fs(kit) = fzero(ep_func,[eps0*0.01,eps0*10],options); % a bracketed search
     end
-    all_eps(smoothness,:) = eps_fs; 
+    all_eps_fs(smoothness,:) = eps_fs; 
 
     for k=start_nodes:end_nodes
         xi = st.fullintnodes{k};
@@ -326,6 +326,7 @@ for smoothness=1:3
         [el2_fs3(k,smoothness),elinf_fs3(k,smoothness),a_time_fs3(k,smoothness),e_time_fs3(k,smoothness),c_poly_fs3{k,smoothness}, cond_fs3(k,smoothness), ~, sparsity_fs3(k,smoothness)] = CSRBFGen(x,y,ell,xe,alph,rbf,ep3,tree,ye_true);
     end
 end
+
 
 %% Now do fixed condition number strategies
 %% Again, different smoothnesses
@@ -396,7 +397,28 @@ for smoothness=1:3
         end    
         tree  = KDTreeSearcher(x);    
         [~,dist] = knnsearch(tree,x,'k',2);
+        % if dim == 1
+        %     % For 1D Chebyshev points, use a combination of approaches
+        %     min_dist = 0.5*min(dist(:,2));
+        %     mean_dist = 0.5*mean(dist(:,2));
+        % 
+        %     % Use the larger of min_dist or a scaled mean_dist
+        %     sep_dist = max(min_dist, 0.5*mean_dist);
+        % 
+        %     % Additional safeguard for extremely clustered points
+        %     if min_dist < 1e-10 * mean_dist
+        %         sep_dist = 0.5*mean_dist;
+        %     end
+        % else
+        %     % For higher dimensions, use the standard approach
+        %     sep_dist = 0.5*min(dist(:,2));
+        % end
+
         sep_dist = 0.5*min(dist(:,2));
+        % if dim==1
+        %     sep_dist = 0.5*mean(dist(:,2));
+        % end
+        
         
         %% Milena: CHECK if this works
         % guess an eigenvalue. 3 here is the dim of the Wendland kernel (always 3 in this code)
@@ -413,6 +435,8 @@ for smoothness=1:3
             ep_func = @(ep) log10( cond(full(rbf(ep,DistanceMatrixCSRBFwt(x,x,ep,tree))))) - log10(k_target);
             eps_vs(kit) = fzero(ep_func,[eps0*0.01,eps0*10],options); % a bracketed search
         end
+
+        all_eps_vs(smoothness,:) = eps_vs; 
         ep1 = eps_vs(1);
         ep2 = eps_vs(2);
         ep3 = eps_vs(3);
