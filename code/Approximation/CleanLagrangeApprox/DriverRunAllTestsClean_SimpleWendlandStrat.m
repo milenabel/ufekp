@@ -460,182 +460,182 @@ function ep = findEpForSparsity(x, tree, rbf, target, tol, sepR)
     end
 end
 
-%% Save results 
-% Timestamp for uniqueness
-timestamp = datestr(datetime('now'), 'yyyyMMdd_HHmmss');
-
-% Construct folder and filename
-results_dir = fullfile('CleanLagrangeApprox/results/', sprintf('%s', function_name));
-if ~exist(results_dir, 'dir')
-    mkdir(results_dir);
-end
-results_filename = fullfile(results_dir, sprintf('results_%s.mat', function_name));
-
-
-% Save everything
-save(results_filename, ...
-    'el2_poly', 'elinf_poly', 'a_time_poly', 'e_time_poly', 'c_poly', ...
-    'el2_diag', 'elinf_diag', 'a_time_diag', 'e_time_diag', 'c_poly_diag', ...
-    'el2_fs1', 'elinf_fs1', 'a_time_fs1', 'e_time_fs1', 'c_poly_fs1', 'sparsity_fs1', ...
-    'el2_fs2', 'elinf_fs2', 'a_time_fs2', 'e_time_fs2', 'c_poly_fs2', 'sparsity_fs2', ...
-    'el2_fs3', 'elinf_fs3', 'a_time_fs3', 'e_time_fs3', 'c_poly_fs3', 'sparsity_fs3', ...
-    'el2_vs1', 'elinf_vs1', 'a_time_vs1', 'e_time_vs1', 'c_poly_vs1', 'sparsity_vs1', ...
-    'el2_vs2', 'elinf_vs2', 'a_time_vs2', 'e_time_vs2', 'c_poly_vs2', 'sparsity_vs2', ...
-    'el2_vs3', 'elinf_vs3', 'a_time_vs3', 'e_time_vs3', 'c_poly_vs3', 'sparsity_vs3', ...
-    'sN', 'dim', 'function_name', 'timestamp');
-
-%% Plot everything
-% add flotting using export_fig
-% first sort
-[ sNs, I ] = sort(sN);
-
-% reorder each error vector/matrix accordingly
-el2_poly_s  = el2_poly  (I);
-el2_diag_s  = el2_diag  (I,1);
-el2_fs1_s   = el2_fs1   (I,1);
-el2_fs2_s   = el2_fs2   (I,1);
-el2_fs3_s   = el2_fs3   (I,1);
-el2_vs1_s   = el2_vs1   (I,1);
-el2_vs2_s   = el2_vs2   (I,1);
-el2_vs3_s   = el2_vs3   (I,1);
-
-e_fs1 = e_time_fs1(I,1);
-e_fs2 = e_time_fs2(I,1);
-e_fs3 = e_time_fs3(I,1);
-e_vs1 = e_time_vs1(I,1);
-e_vs2 = e_time_vs2(I,1);
-e_vs3 = e_time_vs3(I,1);
-
-a_fs1 = a_time_fs1(I,1);
-a_fs2 = a_time_fs2(I,1);
-a_fs3 = a_time_fs3(I,1);
-a_vs1 = a_time_vs1(I,1);
-a_vs2 = a_time_vs2(I,1);
-a_vs3 = a_time_vs3(I,1);
-
-
-%% ERROR vs N^{1/d}
-h = figure; 
-hold on; 
-grid on;
-
-mark = {'-o','-s','-^','--o','--s','--^','-.x','-.+','-.*'};
-
-semilogy(sNs, el2_poly_s,  mark{1}, 'LineWidth',1.2);
-semilogy(sNs, el2_diag_s,  mark{2}, 'LineWidth',1.2);
-semilogy(sNs, el2_fs1_s,   mark{3}, 'LineWidth',1.2);
-semilogy(sNs, el2_fs2_s,   mark{4}, 'LineWidth',1.2);
-semilogy(sNs, el2_fs3_s,   mark{5}, 'LineWidth',1.2);
-semilogy(sNs, el2_vs1_s,   mark{6}, 'LineWidth',1.2);
-semilogy(sNs, el2_vs2_s,   mark{7}, 'LineWidth',1.2);
-semilogy(sNs, el2_vs3_s,   mark{8}, 'LineWidth',1.2);
-
-xlabel(sprintf('N^{1/%d}', dim), 'FontSize', 14);
-ylabel('Relative $\ell_2$ error',     'FontSize', 14,'interpreter','latex');
-legend({'PLS','Diag','FS1','FS2','FS3','VS1','VS2','VS3'}, ...
-       'Location','best','FontSize',10);
-title('$\ell_2$ error vs. $N^{1/d}$', 'FontSize',16,'Interpreter','latex');
-set(gca,'FontSize',12);
-
-export_fig(h, fullfile(results_dir,'error_vs_N.png'), '-png','-r300');
-
-%% BUILD TIMES vs N^{1/d}
-h = figure; hold on; grid on;
-% plot just a_time for each strategy:
-semilogy(sN, a_time_fs1(:,1), mark{3}, 'LineWidth',1.2);
-semilogy(sN, a_time_fs2(:,1), mark{4}, 'LineWidth',1.2);
-semilogy(sN, a_time_fs3(:,1), mark{5}, 'LineWidth',1.2);
-semilogy(sN, a_time_vs1(:,1), mark{6}, 'LineWidth',1.2);
-semilogy(sN, a_time_vs2(:,1), mark{7}, 'LineWidth',1.2);
-semilogy(sN, a_time_vs3(:,1), mark{8}, 'LineWidth',1.2);
-xlabel(sprintf('N^{1/%d}',dim),'FontSize',14)
-ylabel('Assembly time (s)','FontSize',14)
-legend({'FS1','FS2','FS3','VS1','VS2','VS3'},'Location','northwest')
-title('Assembly time vs. N^{1/d}','FontSize',16)
-set(gca,'FontSize',12)
-export_fig(h, fullfile(results_dir,'assembly_time_vs_N.png'), '-png','-r300');
-
-
-%% EVAL TIMES vs N^{1/d}
-h = figure; hold on; grid on;
-semilogy(sN, e_time_fs1(:,1), mark{3}, 'LineWidth',1.2);
-semilogy(sN, e_time_fs2(:,1), mark{4}, 'LineWidth',1.2);
-semilogy(sN, e_time_fs3(:,1), mark{5}, 'LineWidth',1.2);
-semilogy(sN, e_time_vs1(:,1), mark{6}, 'LineWidth',1.2);
-semilogy(sN, e_time_vs2(:,1), mark{7}, 'LineWidth',1.2);
-semilogy(sN, e_time_vs3(:,1), mark{8}, 'LineWidth',1.2);
-xlabel(sprintf('N^{1/%d}',dim),'FontSize',14)
-ylabel('Evaluation time (s)','FontSize',14)
-legend({'FS1','FS2','FS3','VS1','VS2','VS3'},'Location','northwest')
-title('Evaluation time vs. N^{1/d}','FontSize',16)
-set(gca,'FontSize',12)
-export_fig(h, fullfile(results_dir,'eval_time_vs_N.png'), '-png','-r300');
-
-%% ERROR vs SPARSITY (one panel per smoothness, same axes, shared legend)
-strategies = {'fs1','fs2','fs3','vs1','vs2','vs3'};
-labels     = {'FS@0.025','FS@0.05','FS@0.10','VS@0.025','VS@0.05','VS@0.10'};
-markers    = {'-o','-s','-^','-x','-+','-*'};
-colors     = lines(6);
-
-allS = []; allE = [];
-for sm = 1:3
-  for j = 1:6
-    S = eval(sprintf('sparsity_%s(:,%d)', strategies{j}, sm));
-    E = eval(sprintf('el2_%s(:,%d)',      strategies{j}, sm));
-    allS = [allS; S(:)];
-    allE = [allE; E(:)];
-  end
-end
-xlims = [0, max(allS)*1.05];
-ylims = [0, max(allE)*1.05];
-
-figure('Position',[100 100 600 800]);
-t = tiledlayout(3,1,'TileSpacing','Compact','Padding','Compact');
-
-nStrat = numel(strategies);
-hStrat = gobjects(nStrat+1,1);  % +1 for the PLS line
-
-for sm = 1:3
-  ax(sm) = nexttile;
-  hold on, grid on
-
-  for j = 1:nStrat
-    S = eval(sprintf('sparsity_%s(:,%d)',strategies{j},sm));
-    E = eval(sprintf('el2_%s(:,%d)',     strategies{j},sm));
-    n = min(numel(S),numel(E));
-    hh = plot(S(1:n), E(1:n), markers{j}, ...
-              'LineWidth',1.2, 'Color',colors(j,:));
-    % store handles only on the first smoothness
-    if sm==1
-      hStrat(j) = hh;
-    end
-  end
-
-  % draw PLS baseline
-  plh = yline(mean(el2_poly), '--k','PLS','LineWidth',1);
-  if sm==1
-    hStrat(end) = plh;
-  end
-
-  % unify axes across tiles
-  xlim(xlims);  ylim(ylims);
-
-  if sm==3
-    xlabel('Achieved sparsity','FontSize',12)
-  end
-  ylabel('Rel. L^2 error','FontSize',12)
-  title(sprintf('Wendland smoothness = C%d',sm*2),'FontSize',14)
-end
-
-% now make one big legend *on the first axes*:
-lg = legend(ax(1), hStrat, [labels,'PLS'], ...
-            'Orientation','horizontal', ...
-            'Location','northoutside', ...
-            'NumColumns',4, ...
-            'FontSize',10);
-
-% give a bit more breathing‐room:
-t.Padding     = 'loose';
-t.TileSpacing = 'loose';
-
-export_fig(gcf, fullfile(results_dir,'error_vs_sparsity.png'), '-png','-r300');
+% %% Save results 
+% % Timestamp for uniqueness
+% timestamp = datestr(datetime('now'), 'yyyyMMdd_HHmmss');
+% 
+% % Construct folder and filename
+% results_dir = fullfile('CleanLagrangeApprox/results/', sprintf('%s', function_name));
+% if ~exist(results_dir, 'dir')
+%     mkdir(results_dir);
+% end
+% results_filename = fullfile(results_dir, sprintf('results_%s.mat', function_name));
+% 
+% 
+% % Save everything
+% save(results_filename, ...
+%     'el2_poly', 'elinf_poly', 'a_time_poly', 'e_time_poly', 'c_poly', ...
+%     'el2_diag', 'elinf_diag', 'a_time_diag', 'e_time_diag', 'c_poly_diag', ...
+%     'el2_fs1', 'elinf_fs1', 'a_time_fs1', 'e_time_fs1', 'c_poly_fs1', 'sparsity_fs1', ...
+%     'el2_fs2', 'elinf_fs2', 'a_time_fs2', 'e_time_fs2', 'c_poly_fs2', 'sparsity_fs2', ...
+%     'el2_fs3', 'elinf_fs3', 'a_time_fs3', 'e_time_fs3', 'c_poly_fs3', 'sparsity_fs3', ...
+%     'el2_vs1', 'elinf_vs1', 'a_time_vs1', 'e_time_vs1', 'c_poly_vs1', 'sparsity_vs1', ...
+%     'el2_vs2', 'elinf_vs2', 'a_time_vs2', 'e_time_vs2', 'c_poly_vs2', 'sparsity_vs2', ...
+%     'el2_vs3', 'elinf_vs3', 'a_time_vs3', 'e_time_vs3', 'c_poly_vs3', 'sparsity_vs3', ...
+%     'sN', 'dim', 'function_name', 'timestamp');
+% 
+% %% Plot everything
+% % add flotting using export_fig
+% % first sort
+% [ sNs, I ] = sort(sN);
+% 
+% % reorder each error vector/matrix accordingly
+% el2_poly_s  = el2_poly  (I);
+% el2_diag_s  = el2_diag  (I,1);
+% el2_fs1_s   = el2_fs1   (I,1);
+% el2_fs2_s   = el2_fs2   (I,1);
+% el2_fs3_s   = el2_fs3   (I,1);
+% el2_vs1_s   = el2_vs1   (I,1);
+% el2_vs2_s   = el2_vs2   (I,1);
+% el2_vs3_s   = el2_vs3   (I,1);
+% 
+% e_fs1 = e_time_fs1(I,1);
+% e_fs2 = e_time_fs2(I,1);
+% e_fs3 = e_time_fs3(I,1);
+% e_vs1 = e_time_vs1(I,1);
+% e_vs2 = e_time_vs2(I,1);
+% e_vs3 = e_time_vs3(I,1);
+% 
+% a_fs1 = a_time_fs1(I,1);
+% a_fs2 = a_time_fs2(I,1);
+% a_fs3 = a_time_fs3(I,1);
+% a_vs1 = a_time_vs1(I,1);
+% a_vs2 = a_time_vs2(I,1);
+% a_vs3 = a_time_vs3(I,1);
+% 
+% 
+% %% ERROR vs N^{1/d}
+% h = figure; 
+% hold on; 
+% grid on;
+% 
+% mark = {'-o','-s','-^','--o','--s','--^','-.x','-.+','-.*'};
+% 
+% semilogy(sNs, el2_poly_s,  mark{1}, 'LineWidth',1.2);
+% semilogy(sNs, el2_diag_s,  mark{2}, 'LineWidth',1.2);
+% semilogy(sNs, el2_fs1_s,   mark{3}, 'LineWidth',1.2);
+% semilogy(sNs, el2_fs2_s,   mark{4}, 'LineWidth',1.2);
+% semilogy(sNs, el2_fs3_s,   mark{5}, 'LineWidth',1.2);
+% semilogy(sNs, el2_vs1_s,   mark{6}, 'LineWidth',1.2);
+% semilogy(sNs, el2_vs2_s,   mark{7}, 'LineWidth',1.2);
+% semilogy(sNs, el2_vs3_s,   mark{8}, 'LineWidth',1.2);
+% 
+% xlabel(sprintf('N^{1/%d}', dim), 'FontSize', 14);
+% ylabel('Relative $\ell_2$ error',     'FontSize', 14,'interpreter','latex');
+% legend({'PLS','Diag','FS1','FS2','FS3','VS1','VS2','VS3'}, ...
+%        'Location','best','FontSize',10);
+% title('$\ell_2$ error vs. $N^{1/d}$', 'FontSize',16,'Interpreter','latex');
+% set(gca,'FontSize',12);
+% 
+% export_fig(h, fullfile(results_dir,'error_vs_N.png'), '-png','-r300');
+% 
+% %% BUILD TIMES vs N^{1/d}
+% h = figure; hold on; grid on;
+% % plot just a_time for each strategy:
+% semilogy(sN, a_time_fs1(:,1), mark{3}, 'LineWidth',1.2);
+% semilogy(sN, a_time_fs2(:,1), mark{4}, 'LineWidth',1.2);
+% semilogy(sN, a_time_fs3(:,1), mark{5}, 'LineWidth',1.2);
+% semilogy(sN, a_time_vs1(:,1), mark{6}, 'LineWidth',1.2);
+% semilogy(sN, a_time_vs2(:,1), mark{7}, 'LineWidth',1.2);
+% semilogy(sN, a_time_vs3(:,1), mark{8}, 'LineWidth',1.2);
+% xlabel(sprintf('N^{1/%d}',dim),'FontSize',14)
+% ylabel('Assembly time (s)','FontSize',14)
+% legend({'FS1','FS2','FS3','VS1','VS2','VS3'},'Location','northwest')
+% title('Assembly time vs. N^{1/d}','FontSize',16)
+% set(gca,'FontSize',12)
+% export_fig(h, fullfile(results_dir,'assembly_time_vs_N.png'), '-png','-r300');
+% 
+% 
+% %% EVAL TIMES vs N^{1/d}
+% h = figure; hold on; grid on;
+% semilogy(sN, e_time_fs1(:,1), mark{3}, 'LineWidth',1.2);
+% semilogy(sN, e_time_fs2(:,1), mark{4}, 'LineWidth',1.2);
+% semilogy(sN, e_time_fs3(:,1), mark{5}, 'LineWidth',1.2);
+% semilogy(sN, e_time_vs1(:,1), mark{6}, 'LineWidth',1.2);
+% semilogy(sN, e_time_vs2(:,1), mark{7}, 'LineWidth',1.2);
+% semilogy(sN, e_time_vs3(:,1), mark{8}, 'LineWidth',1.2);
+% xlabel(sprintf('N^{1/%d}',dim),'FontSize',14)
+% ylabel('Evaluation time (s)','FontSize',14)
+% legend({'FS1','FS2','FS3','VS1','VS2','VS3'},'Location','northwest')
+% title('Evaluation time vs. N^{1/d}','FontSize',16)
+% set(gca,'FontSize',12)
+% export_fig(h, fullfile(results_dir,'eval_time_vs_N.png'), '-png','-r300');
+% 
+% %% ERROR vs SPARSITY (one panel per smoothness, same axes, shared legend)
+% strategies = {'fs1','fs2','fs3','vs1','vs2','vs3'};
+% labels     = {'FS@0.025','FS@0.05','FS@0.10','VS@0.025','VS@0.05','VS@0.10'};
+% markers    = {'-o','-s','-^','-x','-+','-*'};
+% colors     = lines(6);
+% 
+% allS = []; allE = [];
+% for sm = 1:3
+%   for j = 1:6
+%     S = eval(sprintf('sparsity_%s(:,%d)', strategies{j}, sm));
+%     E = eval(sprintf('el2_%s(:,%d)',      strategies{j}, sm));
+%     allS = [allS; S(:)];
+%     allE = [allE; E(:)];
+%   end
+% end
+% xlims = [0, max(allS)*1.05];
+% ylims = [0, max(allE)*1.05];
+% 
+% figure('Position',[100 100 600 800]);
+% t = tiledlayout(3,1,'TileSpacing','Compact','Padding','Compact');
+% 
+% nStrat = numel(strategies);
+% hStrat = gobjects(nStrat+1,1);  % +1 for the PLS line
+% 
+% for sm = 1:3
+%   ax(sm) = nexttile;
+%   hold on, grid on
+% 
+%   for j = 1:nStrat
+%     S = eval(sprintf('sparsity_%s(:,%d)',strategies{j},sm));
+%     E = eval(sprintf('el2_%s(:,%d)',     strategies{j},sm));
+%     n = min(numel(S),numel(E));
+%     hh = plot(S(1:n), E(1:n), markers{j}, ...
+%               'LineWidth',1.2, 'Color',colors(j,:));
+%     % store handles only on the first smoothness
+%     if sm==1
+%       hStrat(j) = hh;
+%     end
+%   end
+% 
+%   % draw PLS baseline
+%   plh = yline(mean(el2_poly), '--k','PLS','LineWidth',1);
+%   if sm==1
+%     hStrat(end) = plh;
+%   end
+% 
+%   % unify axes across tiles
+%   xlim(xlims);  ylim(ylims);
+% 
+%   if sm==3
+%     xlabel('Achieved sparsity','FontSize',12)
+%   end
+%   ylabel('Rel. L^2 error','FontSize',12)
+%   title(sprintf('Wendland smoothness = C%d',sm*2),'FontSize',14)
+% end
+% 
+% % now make one big legend *on the first axes*:
+% lg = legend(ax(1), hStrat, [labels,'PLS'], ...
+%             'Orientation','horizontal', ...
+%             'Location','northoutside', ...
+%             'NumColumns',4, ...
+%             'FontSize',10);
+% 
+% % give a bit more breathing‐room:
+% t.Padding     = 'loose';
+% t.TileSpacing = 'loose';
+% 
+% export_fig(gcf, fullfile(results_dir,'error_vs_sparsity.png'), '-png','-r300');
