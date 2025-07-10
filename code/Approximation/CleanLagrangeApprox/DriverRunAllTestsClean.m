@@ -3,16 +3,15 @@
 
 
 %% Spatial dimension
-dim = 1;
+dim = 2;
 
 %% Desired polynomial degrees for each N value
-fix_d = 2;
+fix_d = 20;
 desired_degrees = [fix_d, fix_d, fix_d, fix_d, fix_d, fix_d, fix_d];
 % desired_degrees = [1, 2, 3, 4, 5, 6, 7];
 
 %% Load up the node set
 if dim==1
-    % N = 2.^(2:8); N = N';
     N = 2.^(2:8); N = N';
     for k=1:length(N)
         X = chebspace2(-1,1,N(k));
@@ -100,7 +99,8 @@ supports_vs = zeros(3, 3);
 if dim==1
     fac = 1.0;
 elseif dim==2
-    fac = 0.8; 
+    % fac = 0.8;
+    fac = 1.0;
 elseif dim==3
     fac = 1.0;
 end
@@ -111,8 +111,8 @@ end
 if dim==1
     syms x;       
     %f = abs(x);                function_name = 'abs_1d';
-    f = exp(-x.^(-2));     function_name = 'exp_1d';
-    %f = 1./(1 + 25*x.^2);  function_name = 'rk_1d';
+    %f = exp(-x.^(-2));     function_name = 'exp_1d';
+    f = 1./(1 + 25*x.^2);  function_name = 'rk_1d';
     %f = x.^(10);           function_name = 'poly_1d';
     dfx = diff(f,x);
 elseif dim==2
