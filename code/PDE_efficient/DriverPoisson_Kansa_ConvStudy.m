@@ -4,20 +4,20 @@
 
 
 %% Spatial dimension
-dim = 2;
+dim = 3;
 
 %% Define RBF
 
-% Wendland C2 in 3d, pd in all lower dimensions
-rbf = @(e,r) -r.^4.*(4.*r - 5*spones(r));
-drbfor = @(e,r) 20.*e.^2.*r.^3;
-if dim==1
-    lrbf = @(e,r) -20.*e.^2.*r.^2.*(2.*r - 3*spones(r));
-elseif dim==2
-    lrbf = @(e,r) -20.*e.^2.*r.^2.*(r - 3*spones(r));
-elseif dim==3
-    lrbf = @(e,r) 60.*e.^2.*r.^2;
-end
+% % Wendland C2 in 3d, pd in all lower dimensions
+% rbf = @(e,r) -r.^4.*(4.*r - 5*spones(r));
+% drbfor = @(e,r) 20.*e.^2.*r.^3;
+% if dim==1
+%     lrbf = @(e,r) -20.*e.^2.*r.^2.*(2.*r - 3*spones(r));
+% elseif dim==2
+%     lrbf = @(e,r) -20.*e.^2.*r.^2.*(r - 3*spones(r));
+% elseif dim==3
+%     lrbf = @(e,r) 60.*e.^2.*r.^2;
+% end
 
 % %% Wendland C4 in 3d
 % rbf = @(e,r) (r.^6.*(35.*r.^2 - 88.*r + 56*spones(r)))./3;
@@ -37,14 +37,14 @@ end
 %     lrbf = @(e,r) -66.*e.^2.*r.^6.*((r - spones(r)).^2 - 6.*r + 64.*(r - spones(r)).^3 + 7*spones(r));
 % end
 
-% %% Wendland C8 in 3d
-% rbf = @(e,r) (6552290047271679.*r.^10.*(4134.*r.^2 - 3536.*r - 2166.*r.^3 + 429.*r.^4 + 1144*spones(r)))./32761450236358396;
-% drbfor = @(e,r) -(85179770614531827.*e.^2.*r.^9.*(1056.*r - 852.*r.^2 + 231.*r.^3 - 440*spones(r)))./16380725118179198;
-% if dim==2
-%     lrbf = @(e,r) (85179770614531827.*e.^2.*r.^8.*(11022.*r.^2 - 7700.*r - 6924.*r.^3 + 1617.*r.^4 + 1980*spones(r)))./8190362559089599;
-% elseif dim==3
-%     lrbf = @(e,r) (1277696559217977405.*e.^2.*r.^8.*(1540.*r.^2 - 1056.*r - 980.*r.^3 + 231.*r.^4 + 264*spones(r)))./16380725118179198;
-% end
+%% Wendland C8 in 3d
+rbf = @(e,r) (6552290047271679.*r.^10.*(4134.*r.^2 - 3536.*r - 2166.*r.^3 + 429.*r.^4 + 1144*spones(r)))./32761450236358396;
+drbfor = @(e,r) -(85179770614531827.*e.^2.*r.^9.*(1056.*r - 852.*r.^2 + 231.*r.^3 - 440*spones(r)))./16380725118179198;
+if dim==2
+    lrbf = @(e,r) (85179770614531827.*e.^2.*r.^8.*(11022.*r.^2 - 7700.*r - 6924.*r.^3 + 1617.*r.^4 + 1980*spones(r)))./8190362559089599;
+elseif dim==3
+    lrbf = @(e,r) (1277696559217977405.*e.^2.*r.^8.*(1540.*r.^2 - 1056.*r - 980.*r.^3 + 231.*r.^4 + 264*spones(r)))./16380725118179198;
+end
 
 %% Type of boundary condition?
 bctype=1; %1-Dirichlet, 2-Neumann, 3- Robin
@@ -53,7 +53,7 @@ bctype=1; %1-Dirichlet, 2-Neumann, 3- Robin
 if dim==1
     fac = 0.1;
 elseif dim==2
-    fac = 0.15;
+    fac = 0.1;
 elseif dim==3
     fac = 2;
 end
@@ -64,7 +64,7 @@ if dim==1
     syms x;
     syms nrx;
     u = 1 + sin(pi*x);
-    f = diff(u,x,2);
+    f = -diff(u,x,2);
     if bctype==1
         g = u;
     elseif bctype==2
@@ -77,7 +77,7 @@ elseif dim==2
     syms nrx nry;
     u = 1 + sin(pi*x).*cos(pi*y);     
     %u = 1 + x.^5 + y.^2 + x.^2.*y.^2; %verify polynomial reproduction
-    f = (diff(u,x,2) + diff(u,y,2)); %lap u = f
+    f = -(diff(u,x,2) + diff(u,y,2)); %lap u = f
     if bctype==1
         g = u;
     elseif bctype==2
@@ -90,7 +90,7 @@ elseif dim==3
     syms nrx nry nrz;
     u = 1 + sin(pi*x).*cos(pi*y).*sin(pi*z);     
     %u = x.^3 + y.^4 + z.^5;
-    f = (diff(u,x,2) + diff(u,y,2) + diff(u,z,2)); %lap u = f    
+    f = -(diff(u,x,2) + diff(u,y,2) + diff(u,z,2)); %lap u = f    
     if bctype==1
         g = u;
     elseif bctype==2
@@ -175,18 +175,18 @@ for k=start_nodes:end_nodes
         %%Here we use the shifted form.
         V = mpoly_eval(x,a,recurrence);
         rd = speye(length(x),length(x)); %diagonal matrix due to choice of support
-        lconst = lrbf(ep,1); %get the number on the diagonal
+        lconst = -lrbf(ep,1); %get the number on the diagonal
         Lap = lconst*speye(length(x),length(x)); %Laplacian of RBF, also diagonal
         Ni = length(xi); Nb = length(xb);
 
         if dim==1
-            Lv = mpoly_eval(x,a,recurrence,2);
+            Lv = -mpoly_eval(x,a,recurrence,2);
         elseif dim==2
-            Lv = mpoly_eval(x,a,recurrence,[2,0]) + mpoly_eval(x,a,recurrence,[0,2]);
+            Lv = -mpoly_eval(x,a,recurrence,[2,0]) - mpoly_eval(x,a,recurrence,[0,2]);
         elseif dim==3
-            Lv = mpoly_eval(x,a,recurrence,[2,0,0])...
-                 + mpoly_eval(x,a,recurrence,[0,2,0])...
-                 + mpoly_eval(x,a,recurrence,[0,0,2]);    
+            Lv = -mpoly_eval(x,a,recurrence,[2,0,0])...
+                 - mpoly_eval(x,a,recurrence,[0,2,0])...
+                 - mpoly_eval(x,a,recurrence,[0,0,2]);    
         end
 
         if bctype==1 %Dirichlet

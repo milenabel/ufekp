@@ -12,23 +12,23 @@ dim = 2;
 
 %% Define RBF
 
-% %% Wendland C4
-% rbf = @(e,r) (r.^6.*(35.*r.^2 - 88.*r + 56*spones(r)))./3;
-% drbfor = @(e,r) -(56.*e.^2.*r.^5.*(5.*r - 6*spones(r)))./3;
-% if dim==2
-%     lrbf = @(e,r) (112.*e.^2.*r.^4.*(20.*r.^2 - 36.*r + 15*spones(r)))./3;   
-% elseif dim==3    
-%     lrbf = @(e,r) 56.*e.^2.*r.^4.*(15.*r.^2 - 26.*r + 10*spones(r));
-% end
-
-%% Wendland C6
-rbf = @(e,r) r.^8.*(66*spones(r) - 154*r + 121*r.^2 - 32*r.^3);
-drbfor = @(e,r) 22.*e.^2.*r.^7.*(16.*r.^2 - 39.*r + 24*spones(r));
+%% Wendland C4
+rbf = @(e,r) (r.^6.*(35.*r.^2 - 88.*r + 56*spones(r)))./3;
+drbfor = @(e,r) -(56.*e.^2.*r.^5.*(5.*r - 6*spones(r)))./3;
 if dim==2
-    lrbf = @(e,r) 44*e.^2.*r.^6.*(84*spones(r)-264*r+267*r.^2-88*r.^3);
-elseif dim==3
-    lrbf = @(e,r) -66.*e.^2.*r.^6.*((r - spones(r)).^2 - 6.*r + 64.*(r - spones(r)).^3 + 7*spones(r));
+    lrbf = @(e,r) (112.*e.^2.*r.^4.*(20.*r.^2 - 36.*r + 15*spones(r)))./3;   
+elseif dim==3    
+    lrbf = @(e,r) 56.*e.^2.*r.^4.*(15.*r.^2 - 26.*r + 10*spones(r));
 end
+
+% %% Wendland C6
+% rbf = @(e,r) r.^8.*(66*spones(r) - 154*r + 121*r.^2 - 32*r.^3);
+% drbfor = @(e,r) 22.*e.^2.*r.^7.*(16.*r.^2 - 39.*r + 24*spones(r));
+% if dim==2
+%     lrbf = @(e,r) 44*e.^2.*r.^6.*(84*spones(r)-264*r+267*r.^2-88*r.^3);
+% elseif dim==3
+%     lrbf = @(e,r) -66.*e.^2.*r.^6.*((r - spones(r)).^2 - 6.*r + 64.*(r - spones(r)).^3 + 7*spones(r));
+% end
 
 % %% Wendland C8
 % rbf = @(e,r) (6552290047271679.*r.^10.*(4134.*r.^2 - 3536.*r - 2166.*r.^3 + 429.*r.^4 + 1144*spones(r)))./32761450236358396;
@@ -40,11 +40,11 @@ end
 % end
 
 %% Type of boundary condition?
-bctype=2; %1-Dirichlet, 2-Neumann, 3- Robin
+bctype=1; %1-Dirichlet, 2-Neumann, 3- Robin
 
 %% This partially determines the number of polynomial terms
 if dim<3
-    fac = 0.1;
+    fac = 0.4;
 else
     fac = 4;
 end
@@ -124,12 +124,12 @@ for k=start_nodes:end_nodes
     alph = 0; %0-legendre, -0.5- Chebyshev 1, 0.5- Chebyshev 2
     recurrence = @(N) jacobi_recurrence(N,alph,alph);    
     
-    ell = floor(nthroot(fac*length(xi),dim));    
+    ell = floor(fac*nthroot(length(xi),dim));    
     a = total_degree_indices(dim,ell);      
     N = size(a,1);      
-    if k>1
-        ep = ep*2*(nthroot(length(xi)/length(st.fullintnodes{k-1}),dim));
-    end
+    % if k>1
+    %     ep = ep*2*(nthroot(length(xi)/length(st.fullintnodes{k-1}),dim));
+    % end
 
 
     %% Setup RBF approximation with compactly supported RBFs. We'll use Wendland's C^6 RBF.
