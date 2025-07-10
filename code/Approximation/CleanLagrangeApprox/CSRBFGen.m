@@ -30,7 +30,7 @@ c_rbf = (L_a.')\(g- B*c_poly);
 a_time = toc;
 density   = nnz(A)/numel(A);
 sparsity  = 1 - density;  % degree of sparsity of the A matrix
-cond_num = condest(L_a);  
+cond_num = condest(A);  
 
 tic
 rde = DistanceMatrixCSRBFwt(xe,x,ep,tree);
