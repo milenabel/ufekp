@@ -1,5 +1,5 @@
 %% Pick a function to run
-function plotnb_results(function_name, subdir, base_results_dir)
+function plot_results(function_name, subdir, base_results_dir)
     if nargin < 3 || isempty(base_results_dir)
         base_results_dir = fullfile('code/Approximation/CleanLagrangeApprox/results');
     end
