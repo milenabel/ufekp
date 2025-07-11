@@ -12,9 +12,10 @@ xe = computeHexagonTorusNodes(ne);
 
 %% Target function
 rb = 1/3;
-f = @(x) exp( (x(:,1) + x(:,2) + x(:,3)));
+%f = @(x) exp( (x(:,1) + x(:,2) + x(:,3)));
 %f = @(x) exp( (x(:,1) + x(:,2) + x(:,3)).^2);
 %f = @(x) (acos(x(:,1))<rb).* (1 + cos(pi*acos(x(:,1))/rb))/2; %C^1
+f = @(x) (x(:,1).^2).*abs(x(:,1)) + x(:,2).^2.*abs(x(:,2)) + x(:,3).^2.*abs(x(:,3)); 
 
 %% Evaluate this target at the eval points
 f_xe = f(xe);

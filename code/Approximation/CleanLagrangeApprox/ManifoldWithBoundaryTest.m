@@ -2,22 +2,27 @@
 %% rank-deficient on any algebraic Riemannian manifold.
 %% We will tackle this with a rank-revealing QR factorization of
 %% matrices that involve P.
+man = 'hs'; %hs - hemisphere, ht - half torus
 
-%% Numbers of points on the sphere for a convergence study
+%% Numbers of points on the manifold for a convergence study
 Ns = [100,200,400,800,1600,3200,6400,12800];
 
 %% Number of eval points
+q = 1.4; %clustering parameter
 Ne = 15000;
-xe = spiral_points ( 1, [0,0,0], Ne );
+if strcmp(man,'ht')
+    xe = cylinder_points(Ne);
+else
+    xe = hemispherePts (Ne,q );
+end
 
 %% Target function
 rb = 1/3;
 %f = @(x) exp( (x(:,1) + x(:,2) + x(:,3)).^2./0.8);
 %f = @(x) (acos(x(:,1))<rb).* (1 + cos(pi*acos(x(:,1))/rb))/2; %C^1
-%f = @(x) abs(x(:,1)).^3.*abs(x(:,2)).^3.*abs(x(:,3)).^3;
-%f = @(x) abs(x(:,1) - 0.3).^3;
+%f = @(x) (x(:,3)).^(5/2) + (1-x(:,3)).^(5/2);
+%f = @(x) abs(x(:,1)).^3.*abs(x(:,1)) + abs(x(:,2)).^3.*abs(x(:,2));
 f = @(x) (x(:,1).^2).*abs(x(:,1)) + x(:,2).^2.*abs(x(:,2)) + x(:,3).^2.*abs(x(:,3)); 
-
 
 %% Evaluate this target at the eval points
 f_xe = f(xe);
@@ -31,7 +36,13 @@ rbf = @(e,r) -r.^4.*(4.*r - 5*spones(r)); %C2
 %% Convergence study
 for k=1:length(Ns)
     %% Generate the interpolation nodes
-    x = spiral_points(1, [0,0,0], Ns(k));
+    %x = spiral_points(1, [0,0,0], Ns(k));
+    if strcmp(man,'hs')
+        x = hemispherePts(Ns(k),q);
+    else
+        %x = half_torus_points(Ns(k),q);
+        x = cylinder_points(Ns(k),true);
+    end
 
     %% Get a tree
     tree = KDTreeSearcher(x);

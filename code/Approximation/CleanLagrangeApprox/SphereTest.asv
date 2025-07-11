@@ -12,12 +12,8 @@ xe = spiral_points ( 1, [0,0,0], Ne );
 
 %% Target function
 rb = 1/3;
-%f = @(x) exp( (x(:,1) + x(:,2) + x(:,3)).^2./0.8);
+f = @(x) exp( (x(:,1) + x(:,2) + x(:,3)));
 %f = @(x) (acos(x(:,1))<rb).* (1 + cos(pi*acos(x(:,1))/rb))/2; %C^1
-%f = @(x) abs(x(:,1)).^3.*abs(x(:,2)).^3.*abs(x(:,3)).^3;
-%f = @(x) abs(x(:,1) - 0.3).^3;
-f = @(x) (x(:,1).^2).*abs(x(:,1)) + x(:,2).^2.*abs(x(:,2)) + x(:,3).^2.*abs(x(:,3)); 
-
 
 %% Evaluate this target at the eval points
 f_xe = f(xe);
@@ -41,11 +37,11 @@ for k=1:length(Ns)
     f_x(isnan(f_x)) = 0;
 
     %% Get the polynomial degree. We'll use ambient polynomials in R^3
-    ell = floor(nthroot(length(x),3)); 
+    ell = floor(0.8*nthroot(length(x),3)); 
 
     %% Do poly least squares with rank-revealing QR
-    [el2_poly(k),elinf_poly(k),a_time_poly(k),e_time_poly(k),~] = PLSManifold(x,f_x,ell,xe,0,f_xe);
+    [el2_poly,elinf_poly,a_time,e_time,c_poly] = PLSManifold(x,y,ell,xe,0,ye);
 
     %% Do a CSRBF + poly fit that uses a rank-revealing QR
-   [el2(k,1),elinf(k,1),a_time(k,1),e_time(k,1),~,cond_num(k,1),~, sparsity(k,1)] = CSRBFGenManifold(x,f_x,ell,xe,0,rbf,7,tree,f_xe);   
+   [el2(k,1),elinf(k,1),a_time(k,1),e_time(k,1),~,cond_num(k,1),~, sparsity(k,1)] = CSRBFGenManifold(x,f_x,ell,xe,0,rbf,5,tree,f_xe);   
 end
