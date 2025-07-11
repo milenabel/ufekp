@@ -4,10 +4,10 @@
 %% matrices that involve P.
 
 %% Numbers of points on the sphere for a convergence study
-Ns = [100,200,400,800,1600,3200,6400];
+Ns = [100,200,400,800,1600,3200,6400,12800];
 
 %% Number of eval points
-Ne = 10000;
+Ne = 15000;
 xe = spiral_points ( 1, [0,0,0], Ne );
 
 %% Target function
@@ -40,5 +40,5 @@ for k=1:length(Ns)
     ell = floor(0.8*nthroot(length(x),3));   
 
     %% Do a CSRBF + poly fit that uses a rank-revealing QR
-   [el2(k,1),elinf(k,1),a_time(k,1),e_time(k,1),~,cond_num(k,1),~, sparsity(k,1)] = CSRBFGenManifold(x,f_x,ell,xe,0,rbf,1,tree,f_xe);   
+   [el2(k,1),elinf(k,1),a_time(k,1),e_time(k,1),~,cond_num(k,1),~, sparsity(k,1)] = CSRBFGenManifold(x,f_x,ell,xe,0,rbf,5,tree,f_xe);   
 end

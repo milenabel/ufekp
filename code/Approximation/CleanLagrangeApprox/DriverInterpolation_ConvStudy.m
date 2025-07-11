@@ -4,7 +4,7 @@
 
 
 %% Spatial dimension
-dim = 1;
+dim = 2;
 
 %% Load up the node set
 if dim==1
@@ -70,7 +70,7 @@ end_nodes = size(st.fullintnodes,1);
 if dim==1
     fac = 1;
 elseif dim==2
-    fac = 0.8; 
+    fac = 1; 
 elseif dim==3
     fac = 1.0;
 end
@@ -87,11 +87,11 @@ if dim==1
     dfx = diff(f,x);
 elseif dim==2
     syms x y;    
-    %f = abs(x).^3.*abs(y).^3;
+    f = abs(x).^3.*abs(y).^3;
     %f = exp(-x.^(-2)).*exp(-y.^(-2));    
-    %f = 1./(1 + 25*(x.^2 + y.^2));
+    %f = 1./(1 + 16*(x.^2 + y.^2));
     %f = exp(-10*((x-.3).^(-2)+y.^(-2)));    
-    f = exp(-10*((x-.3).^2+y.^2));
+    %f = exp(-10*((x-.3).^2+y.^2));
     %f = x.^(8).*y.^(8);
     dfx = diff(f,x); dfy = diff(f,y);
 elseif dim==3
@@ -264,10 +264,11 @@ for smoothness=1:4
             A = rbf(ep,rd);
             L_a = chol(A,'lower'); %get lower triangular cholesky factor            
             dA = decomposition(full(L_a),'triangular','lower');
-            [Q,R] = qr(dA\V,0);
+            B = dA\V;
+            [Q,R] = qr(B,0);
             g = dA\rhs;
             c_poly = linsolve(R,Q'*g,opts2);
-            c_rbf = dA'\(g - dA\(V*c_poly));                     
+            c_rbf = (L_a.')\(g - B*c_poly);                     
             %[Q,R] = qr(linsolve(full(L_a),V,opts1),0);
             %c_poly = linsolve(R,Q'*linsolve(full(L_a),rhs,opts1),opts2);
             %c_rbf = linsolve(full(L_a.'),L_a*(rhs - V*c_poly),opts2);   
