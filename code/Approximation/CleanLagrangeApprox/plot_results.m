@@ -79,10 +79,21 @@ function plotErrorVsN(res, sm, xmin, xmax, err_min, err_max)
     el2_vs2_s = res.el2_vs2(:,sm);
     el2_vs3_s = res.el2_vs3(:,sm);
 
+    xx = sNs(:);
+    yy = el2_fs1_s(:);        
+    ok = isnan(yy)|yy<=0;     
+    xx(ok)=[];  yy(ok)=[];
+    
+    coeff_exp = polyfit(xx, log(yy), 1);
+    a = coeff_exp(1);
+    b = coeff_exp(2);
+    fprintf('Exponential fit:   E(N) ≃ %.2f · exp(%.2f·N^{1/d})\n',  exp(b), a);
+    yfit_exp = exp(b) * exp( a * xx );
+
     h = figure;  %grid on;
     set(h, 'Color', 'none');          
     ax = gca;
-    set(ax, 'Color', 'none','LineWidth', 1.2);     
+    set(ax, 'Color', 'none','FontSize', 12,'LineWidth', 1.2,'TickLabelInterpreter', 'latex');     
     marks = {'-o','-s','-^','-x','-+'};
     semilogy(sNs, el2_poly_s, marks{1}, 'LineWidth',1.2);
     hold on;
@@ -90,22 +101,27 @@ function plotErrorVsN(res, sm, xmin, xmax, err_min, err_max)
     semilogy(sNs, el2_fs1_s,  marks{3}, 'LineWidth',1.2);
     semilogy(sNs, el2_fs2_s,  marks{4}, 'LineWidth',1.2);
     semilogy(sNs, el2_fs3_s,  marks{5}, 'LineWidth',1.2);
+    semilogy(xx, yfit_exp, '--','LineWidth',1.5, 'Color',[.5 .5 .5]);
+
 
     if dim==1
-        xlabel(sprintf('$N$', dim),'Interpreter','latex','FontSize',16);
+        xlabel('N','Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$', dim),'Interpreter','latex','FontSize',16);
+        xlabel(sprintf('N^{1/%d}', dim),'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Relative $\ell_2$ error');
-    legend({'PLS','Diag','$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','best','Interpreter','latex','FontSize',14);
+    ylabel('Relative l_2 error','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'PLS','Diag','K_t = 1e12','K_t = 1e8','K_t = 1e4', 'exp trendline'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
 
     if sm == 1
-        title(sprintf('$\\ell_2$ error vs. $N^{1/d}$, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('$\\ell_2$ error vs. $N^{1/d}$, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Relative l_2 error vs. N^{1/d}, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('$\\ell_2$ error vs. $N^{1/d}$, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18); 
+        title(sprintf('Relative l_2 error vs. N^{1/d}, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14); 
     end
+
+    fprintf('Exponential fit:   E(N) = %.2f · exp(%.2f·N^{1/d})\n',  exp(b), a);
+
 
     % force all plots to use the same x‐ and y-ranges
     xlim([xmin xmax]);
@@ -129,19 +145,19 @@ function plotErrorVsN(res, sm, xmin, xmax, err_min, err_max)
     semilogy(sNs, el2_vs3_s,  marks{5}, 'LineWidth',1.2);
 
     if dim==1
-        xlabel(sprintf('$N$', dim),'Interpreter','latex','FontSize',16);
+        xlabel('N','Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$', dim),'Interpreter','latex','FontSize',16);
+        xlabel(sprintf('N^{1/%d}', dim),'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Relative $\ell_2$ error','Interpreter','latex','FontSize',16);
-    legend({'PLS','Diag','$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','best','Interpreter','latex','FontSize',14);
+    ylabel('Relative l_2 error','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'PLS','Diag','K_t = 1e12','K_t = 1e8','K_t = 1e4'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
 
     if sm == 1
-        title(sprintf('$\\ell_2$ error vs. $N^{1/d}$, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('$\\ell_2$ error vs. $N^{1/d}$, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Relative l_2 error vs. N^{1/d}, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('$\\ell_2$ error vs. $N^{1/d}$, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18); 
+        title(sprintf('Relative l_2 error vs. N^{1/d}, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14); 
     end
 
     % force all plots to use the same x‐ and y-ranges
@@ -168,25 +184,25 @@ function plotAssemblyTimeVsN(res, sm, xmin, xmax, at_min, at_max)
     h = figure; grid on;
     set(h, 'Color', 'none');          
     ax = gca;
-    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2);
+    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2, 'TickLabelInterpreter', 'latex');
     marks = {'-o','-s','-^','-x','-+'};
     semilogy(sNs, a_fs1, marks{1}, 'LineWidth',1.2);
     hold on; 
     semilogy(sNs, a_fs2, marks{2}, 'LineWidth',1.2);
     semilogy(sNs, a_fs3, marks{3}, 'LineWidth',1.2);
     if dim==1
-        xlabel(sprintf('$N$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel('N', 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel(sprintf('N^{1/%d$}', dim), 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Assembly and Solve time (s)','FontSize',16,'Interpreter','latex');
-    legend({'$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','northwest','FontSize',14,'Interpreter','latex');
+    ylabel('Assembly and Solve time (s)','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'K_t = 1e12','K_t = 1e8','K_t = 1e4'}, 'Location','best','FontSize',14,'FontWeight','bold','Interpreter','tex');
     if sm==1
-        title(sprintf('Assembly and Solve time, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Assembly and Solve time, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('Assembly and Solve time, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Assembly and Solve time, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('Assembly and Solve time, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Assembly and Solve time, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     end
 
     % force all plots to use the same x‐ and y-ranges
@@ -201,25 +217,25 @@ function plotAssemblyTimeVsN(res, sm, xmin, xmax, at_min, at_max)
     h = figure; grid on;
     set(h, 'Color', 'none');          
     ax = gca;
-    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2);
+    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2, 'TickLabelInterpreter', 'latex');
     marks = {'-o','-s','-^','-x','-+'};
     semilogy(sNs, a_vs1, marks{1}, 'LineWidth',1.2);
     hold on; 
     semilogy(sNs, a_vs2, marks{2}, 'LineWidth',1.2);
     semilogy(sNs, a_vs3, marks{3}, 'LineWidth',1.2);
     if dim==1
-        xlabel(sprintf('$N$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel('N', 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel(sprintf('N^{1/%d$}', dim), 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Assembly and Solve time (s)','FontSize',16,'Interpreter','latex');
-    legend({'$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','northwest','FontSize',14,'Interpreter','latex');
+    ylabel('Assembly and Solve time (s)','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'K_t = 1e12','K_t = 1e8','K_t = 1e4'}, 'Location','best','FontSize',14,'FontWeight','bold','Interpreter','tex');
     if sm==1
-        title(sprintf('Assembly and Solve time, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Assembly and Solve time, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('Assembly and Solve time, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Assembly and Solve time, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('Assembly and Solve time, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Assembly and Solve time, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     end
 
     % force all plots to use the same x‐ and y-ranges
@@ -246,25 +262,25 @@ function plotEvalTimeVsN(res, sm, xmin, xmax, et_min, et_max)
     h = figure; grid on;
     set(h, 'Color', 'none');          
     ax = gca;
-    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2);
+    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2, 'TickLabelInterpreter', 'latex');
     marks = {'-o','-s','-^','-x','-+'};
     semilogy(sNs, e_fs1, marks{1}, 'LineWidth',1.2);
     hold on;
     semilogy(sNs, e_fs2, marks{2}, 'LineWidth',1.2);
     semilogy(sNs, e_fs3, marks{3}, 'LineWidth',1.2);
     if dim==1
-        xlabel(sprintf('$N$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel('N', 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel(sprintf('N^{1/%d$}', dim), 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Evaluation time (s)','FontSize',16,'Interpreter','latex');
-    legend({'$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','best','FontSize',14,'Interpreter','latex');
+    ylabel('Evaluation time (s)','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'K_t = 1e12','K_t = 1e8','K_t = 1e4'}, 'Location','best','FontSize',14,'FontWeight','bold','Interpreter','tex');
     if sm==1
-        title(sprintf('Evaluation time, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Evaluation time, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('Evaluation time, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Evaluation time, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('Evaluation time, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Evaluation time, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     end
 
     % force all plots to use the same x‐ and y-ranges
@@ -278,25 +294,25 @@ function plotEvalTimeVsN(res, sm, xmin, xmax, et_min, et_max)
     h = figure; grid on;
     set(h, 'Color', 'none');          
     ax = gca;
-    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2);
+    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2, 'TickLabelInterpreter', 'latex');
     marks = {'-o','-s','-^','-x','-+'};
     semilogy(sNs, e_vs1, marks{1}, 'LineWidth',1.2);
     hold on; 
     semilogy(sNs, e_vs2, marks{2}, 'LineWidth',1.2);
     semilogy(sNs, e_vs3, marks{3}, 'LineWidth',1.2);
     if dim==1
-        xlabel(sprintf('$N$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel('N', 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$', dim), 'FontSize',16,'Interpreter','latex');
+        xlabel(sprintf('N^{1/%d$}', dim), 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Evaluation time (s)','FontSize',16,'Interpreter','latex');
-    legend({'$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','best','FontSize',14,'Interpreter','latex');
+    ylabel('Evaluation time (s)','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'K_t = 1e12','K_t = 1e8','K_t = 1e4'}, 'Location','best','FontSize',14,'FontWeight','bold','Interpreter','tex');
     if sm==1
-        title(sprintf('Evaluation time, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Evaluation time, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('Evaluation time, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Evaluation time, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('Evaluation time, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Evaluation time, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     end
 
     % force all plots to use the same x‐ and y-ranges
@@ -323,7 +339,7 @@ function plotSparsityVsN(res, sm, xmin, xmax, sp_min, sp_max)
     h = figure; grid on;
     set(h, 'Color', 'none');          
     ax = gca;
-    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2);
+    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2, 'TickLabelInterpreter', 'latex');
     marks = {'-o','-s','-^','-x','-+'};
     plot(sNs, sp_fs1, marks{1}, 'LineWidth',1.2);
     hold on; 
@@ -331,18 +347,18 @@ function plotSparsityVsN(res, sm, xmin, xmax, sp_min, sp_max)
     plot(sNs, sp_fs3, marks{3}, 'LineWidth',1.2);
 
     if dim==1
-        xlabel('$N$','Interpreter','latex','FontSize',16);
+        xlabel('N', 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$',dim),'Interpreter','latex','FontSize',16);
+        xlabel(sprintf('N^{1/%d$}', dim), 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Achieved sparsity','FontSize',16,'Interpreter','latex');
-    legend({'$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','southeast','FontSize',14,'Interpreter','latex');
+    ylabel('Achieved sparsity','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'K_t = 1e12','K_t = 1e8','K_t = 1e4'}, 'Location','best','FontSize',14,'FontWeight','bold','Interpreter','tex');
     if sm==1
-        title(sprintf('Sparsity vs. $N^{1/d}$, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Sparsity vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('Sparsity vs. $N^{1/d}$, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Sparsity vs. N^{1/d}, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('Sparsity vs. $N^{1/d}$, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Sparsity vs. N^{1/d}, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     end
 
     % force all plots to use the same x‐ and y-ranges:
@@ -357,7 +373,7 @@ function plotSparsityVsN(res, sm, xmin, xmax, sp_min, sp_max)
     h = figure; grid on;
     set(h, 'Color', 'none');          
     ax = gca;
-    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2);
+    set(ax, 'Color', 'none','FontSize', 12, 'LineWidth', 1.2, 'TickLabelInterpreter', 'latex');
     marks = {'-o','-s','-^','-x','-+'};
     plot(sNs, sp_fs1, marks{1}, 'LineWidth',1.2);
     hold on; 
@@ -365,18 +381,18 @@ function plotSparsityVsN(res, sm, xmin, xmax, sp_min, sp_max)
     plot(sNs, sp_vs3, marks{3}, 'LineWidth',1.2);
 
     if dim==1
-        xlabel('$N$','Interpreter','latex','FontSize',16);
+        xlabel('N', 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     else
-        xlabel(sprintf('$N^{1/%d}$',dim),'Interpreter','latex','FontSize',16);
+        xlabel(sprintf('N^{1/%d$}', dim), 'Interpreter','tex','FontSize',14,'FontWeight','bold');
     end
-    ylabel('Achieved sparsity','FontSize',16,'Interpreter','latex');
-    legend({'$K_t$ = $1e12$','$K_t$ = $1e8$','$K_t$ = $1e4$'}, 'Location','southeast','FontSize',14,'Interpreter','latex');
+    ylabel('Achieved sparsity','Interpreter','tex','FontSize',14,'FontWeight','bold');
+    legend({'K_t = 1e12','K_t = 1e8','K_t = 1e4'}, 'Location','best','FontSize',14,'FontWeight','bold','Interpreter','tex');
     if sm==1
-        title(sprintf('Sparsity vs. $N^{1/d}$, $C^2(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Sparsity vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==2
-        title(sprintf('Sparsity vs. $N^{1/d}$, $C^4(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Sparsity vs. N^{1/d}, C^4(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     elseif sm==3
-        title(sprintf('Sparsity vs. $N^{1/d}$, $C^6(\\mathrm{R}^3)$ Wendland Kernel'),'Interpreter','latex','FontSize',18);
+        title(sprintf('Sparsity vs. N^{1/d}, C^6(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
     end
 
     % force all plots to use the same x‐ and y-ranges:
