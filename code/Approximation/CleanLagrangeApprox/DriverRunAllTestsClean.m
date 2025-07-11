@@ -6,8 +6,8 @@
 dim = 2;
 
 %% Desired polynomial degrees for each N value
-fix_d = 20;
-desired_degrees = [fix_d, fix_d, fix_d, fix_d, fix_d, fix_d, fix_d];
+% fix_d = 20;
+% desired_degrees = [fix_d, fix_d, fix_d, fix_d, fix_d, fix_d, fix_d];
 % desired_degrees = [1, 2, 3, 4, 5, 6, 7];
 
 %% Load up the node set
@@ -117,12 +117,13 @@ if dim==1
     dfx = diff(f,x);
 elseif dim==2
     syms x y;    
-    f = abs(x).^3 .* abs(y).^3;              function_name = 'abs_2d';
+    %f = abs(x).^3 .* abs(y).^3;              function_name = 'abs_2d';
     %f = exp(-x.^(-2)).*exp(-y.^(-2));        function_name = 'exp_2d';
     %f = 1./(1 + 25*(x.^2 + y.^2));           function_name = 'rk_2d';
-    %f = exp(-10*((x-.3).^(-2)+y.^(-2)));    function_name = 'exp10_2d';
+    %f = exp(-10*((x-.3).^(-2)+y.^(-2)));     function_name = 'exp10_2d';
     %f = exp(-10*((x-.3).^2+y.^2));           function_name = 'exp10inv_2d';
     %f = x.^8 .* y.^8;                        function_name = 'poly_2d';
+    f = exp(x + y);                          function_name = 'exp_xy_2d';
     dfx = diff(f,x); dfy = diff(f,y);
 elseif dim==3
     syms x y z;      
@@ -158,13 +159,13 @@ for k=start_nodes:end_nodes
     xb = st.bdrynodes{k};
     x = [xi;xb];
     alph = 0; %legendre
-    % ell = floor(fac*nthroot(length(x),dim));     
-    if k <= length(desired_degrees)
-        ell = desired_degrees(k);
-    else
-        ell = floor(fac*nthroot(length(x),dim));
-        fprintf('Fallback');
-    end
+    ell = floor(fac*nthroot(length(x),dim));     
+    % if k <= length(desired_degrees)
+    %     ell = desired_degrees(k);
+    % else
+    %     ell = floor(fac*nthroot(length(x),dim));
+    %     fprintf('Fallback');
+    % end
     ell = max([ell,1]); 
     ell_poly(k,1) = ell;
     if dim==1
@@ -229,13 +230,13 @@ for smoothness=1:3
         xb = st.bdrynodes{k};
         x = [xi;xb];
         alph = 0; %legendre
-        % ell = floor(fac*nthroot(length(x),dim));    
-        if k <= length(desired_degrees)
-            ell = desired_degrees(k);
-        else
-            ell = floor(fac*nthroot(length(x),dim));
-            fprintf('Fallback');
-        end
+        ell = floor(fac*nthroot(length(x),dim));    
+        % if k <= length(desired_degrees)
+        %     ell = desired_degrees(k);
+        % else
+        %     ell = floor(fac*nthroot(length(x),dim));
+        %     fprintf('Fallback');
+        % end
         ell = max([ell,1]); 
         ell_diag(k,smoothness) = ell;
 
@@ -338,13 +339,13 @@ for smoothness=1:3
         xb = st.bdrynodes{k};
         x = [xi;xb];
         alph = 0; %legendre
-        % ell = floor(fac*nthroot(length(x),dim));
-        if k <= length(desired_degrees)
-            ell = desired_degrees(k);
-        else
-            ell = floor(fac*nthroot(length(x),dim));
-            fprintf('Fallback');
-        end
+        ell = floor(fac*nthroot(length(x),dim));
+        % if k <= length(desired_degrees)
+        %     ell = desired_degrees(k);
+        % else
+        %     ell = floor(fac*nthroot(length(x),dim));
+        %     fprintf('Fallback');
+        % end
         ell = max([ell,1]); 
         ell_fs1(k,smoothness) = ell;  % For K=1e12
         ell_fs2(k,smoothness) = ell;  % For K=1e8
@@ -432,13 +433,13 @@ for smoothness=1:3
         Nnodes = size(x,1);
 
         alph = 0; %legendre
-        % ell = floor(fac*nthroot(length(x),dim)); 
-        if k <= length(desired_degrees)
-            ell = desired_degrees(k);
-        else
-            ell = floor(fac*nthroot(length(x),dim));
-            fprintf('Fallback');
-        end
+        ell = floor(fac*nthroot(length(x),dim)); 
+        % if k <= length(desired_degrees)
+        %     ell = desired_degrees(k);
+        % else
+        %     ell = floor(fac*nthroot(length(x),dim));
+        %     fprintf('Fallback');
+        % end
         ell = max([ell,1]);
         ell_vs1(k,smoothness) = ell;  % For K=1e12
         ell_vs2(k,smoothness) = ell;  % For K=1e8
@@ -529,7 +530,7 @@ timestamp = datestr(datetime('now'), 'yyyyMMdd_HHmmss');
 % elseif fac==1
 %     results_dir = fullfile('code/Approximation/CleanLagrangeApprox/results/', sprintf('%s', function_name),'/fixed');
 % end
-results_dir = fullfile('code/Approximation/CleanLagrangeApprox/results/', sprintf('%s', function_name),'/low');
+results_dir = fullfile('code/Approximation/CleanLagrangeApprox/results/', sprintf('%s', function_name),'/high');
 if ~exist(results_dir, 'dir')
     mkdir(results_dir);
 end
