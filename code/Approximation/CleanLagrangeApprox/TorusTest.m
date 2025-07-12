@@ -53,7 +53,7 @@ end
 %% Save results 
 % Timestamp for uniqueness
 
-sN = sqrt(n);
+sN = sqrt(Ns);
 function_name = 'torus';
 timestamp = datestr(datetime('now'), 'yyyyMMdd_HHmmss');
 results_dir = fullfile('results/', sprintf('%s', function_name),'/high');
@@ -65,7 +65,7 @@ results_filename = fullfile(results_dir, sprintf('results_%s.mat', function_name
 
 % Save everything
 save(results_filename, ...
-    'el2_poly', 'elinf_poly', 'a_time_poly', 'e_time_poly', 'coeff_exp', 'ell', ...
+    'el2_poly', 'elinf_poly', 'a_time_poly', 'e_time_poly', 'ell', ...
     'el2', 'elinf', 'a_time', 'e_time', 'cond_num', 'sparsity', ...
     'sN', 'function_name', 'timestamp');
 
@@ -81,18 +81,18 @@ b = coeff_exp(2);
 fprintf('Exponential fit:   E(N) ≃ %.2f · exp(%.2f·N^{1/d})\n',  exp(b), a);
 yfit_exp = exp(b) * exp( a * xx );
 
-h=figure;
-set(h, 'Color', 'none');          
-ax = gca;
-set(ax, 'Color', 'none','FontSize', 12,'LineWidth', 1.2,'TickLabelInterpreter', 'latex');     
-marks = {'-o','-s','-^','-x','-+'};
-semilogy(sqrt(n), el2(:),marks{1}, 'LineWidth',1.2);
-hold on;
-semilogy(sqrt(n), el2_poly(:),marks{2}, 'LineWidth',1.2);
-semilogy(xx, yfit_exp, '--','LineWidth',1.5, 'Color',[.5 .5 .5]);
-xlabel('N^{1/2}','Interpreter','tex','FontSize',14,'FontWeight','bold');
-ylabel('Relative l_2 error','Interpreter','tex','FontSize',14,'FontWeight','bold');
-legend({'FS','PLS', 'exp trendline'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
-title(sprintf('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
-export_fig(gcf, fullfile(results_dir,'torus_error_vs_N.png'),'-png','-r300','-transparent');
-close(h);
+% h=figure;
+% set(h, 'Color', 'none');          
+% ax = gca;
+% set(ax, 'Color', 'none','FontSize', 12,'LineWidth', 1.2,'TickLabelInterpreter', 'latex');     
+% marks = {'-o','-s','-^','-x','-+'};
+% semilogy(sqrt(n), el2(:),marks{1}, 'LineWidth',1.2);
+% hold on;
+% semilogy(sqrt(n), el2_poly(:),marks{2}, 'LineWidth',1.2);
+% semilogy(xx, yfit_exp, '--','LineWidth',1.5, 'Color',[.5 .5 .5]);
+% xlabel('N^{1/2}','Interpreter','tex','FontSize',14,'FontWeight','bold');
+% ylabel('Relative l_2 error','Interpreter','tex','FontSize',14,'FontWeight','bold');
+% legend({'FS','PLS', 'exp trendline'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
+% title(sprintf('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
+% export_fig(gcf, fullfile(results_dir,'torus_error_vs_N.png'),'-png','-r300','-transparent');
+% close(h);
