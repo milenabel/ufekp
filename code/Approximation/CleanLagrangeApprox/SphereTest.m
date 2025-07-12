@@ -52,6 +52,18 @@ end
 
 % results_dir('results');
 
+xx_sq = sqrt(Ns);
+xx = xx_sq(:);
+yy = el2(:); 
+ok = isnan(yy)|yy<=0;
+xx(ok)=[];  yy(ok)=[];
+
+coeff_exp = polyfit(xx, log(yy), 1);
+a = coeff_exp(1);
+b = coeff_exp(2);
+fprintf('Exponential fit:   E(N) ≃ %.2f · exp(%.2f·N^{1/d})\n',  exp(b), a);
+yfit_exp = exp(b) * exp( a * xx );
+
 h=figure;
 set(h, 'Color', 'none');          
 ax = gca;
@@ -60,9 +72,10 @@ marks = {'-o','-s','-^','-x','-+'};
 semilogy(sqrt(Ns), el2(:),marks{1}, 'LineWidth',1.2);
 hold on;
 semilogy(sqrt(Ns), el2_poly(:),marks{2}, 'LineWidth',1.2);
+semilogy(xx, yfit_exp, '--','LineWidth',1.5, 'Color',[.5 .5 .5]);
 xlabel('N^{1/2}','Interpreter','tex','FontSize',14,'FontWeight','bold');
 ylabel('Relative l_2 error','Interpreter','tex','FontSize',14,'FontWeight','bold');
-legend({'FS','PLS'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
+legend({'FS','PLS', 'exp trendline'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
 title(sprintf('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
 %export_fig(gcf, fullfile(res.results_dir,'error_vs_N_fs_s%d.png'),'-png','-r300','-transparent');
 %close(h);
