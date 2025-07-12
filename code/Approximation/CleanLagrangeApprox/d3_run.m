@@ -87,8 +87,8 @@ elseif dim==3
     % f = 1./(1 + 9*(x.^2 + y.^2 + z.^2));             function_name = 'rk_3d';
     %f = x.^(4).*y.^(2).*z.^(2);                       function_name = 'poly_3d';
 
-    f = (x.^2 + y.^2 + z^2).^(3/2);                 function_name = 'xy_p_3d';
-    %f = exp( ((x + y + z).^(2))/0.8 );              function_name = 'exp_p_3d';
+    %f = (x.^2 + y.^2 + z^2).^(3/2);                 function_name = 'xy_p_3d';
+    f = exp( ((x + y + z).^(2))/0.8 );              function_name = 'exp_p_3d';
     dfx = diff(f,x); dfy = diff(f,y); dfz = diff(f,z);
 end
 f = matlabFunction(f);

@@ -50,8 +50,27 @@ for k=1:length(n)
    [el2(k,1),elinf(k,1),a_time(k,1),e_time(k,1),~,cond_num(k,1),~, sparsity(k,1)] = CSRBFGenManifold(x,f_x,ell,xe,0,rbf,7,tree,f_xe);   
 end
 
-xx_sq = sqrt(n);
-xx = xx_sq(:);
+%% Save results 
+% Timestamp for uniqueness
+
+sN = sqrt(n);
+function_name = 'torus';
+timestamp = datestr(datetime('now'), 'yyyyMMdd_HHmmss');
+results_dir = fullfile('results/', sprintf('%s', function_name),'/high');
+if ~exist(results_dir, 'dir')
+    mkdir(results_dir);
+end
+results_filename = fullfile(results_dir, sprintf('results_%s.mat', function_name));
+
+
+% Save everything
+save(results_filename, ...
+    'el2_poly', 'elinf_poly', 'a_time_poly', 'e_time_poly', 'coeff_exp', 'ell', ...
+    'el2', 'elinf', 'a_time', 'e_time', 'cond_num', 'sparsity', ...
+    'sN', 'function_name', 'timestamp');
+
+%% Plot
+xx = sN(:);
 yy = el2(:); 
 ok = isnan(yy)|yy<=0;
 xx(ok)=[];  yy(ok)=[];
@@ -75,5 +94,5 @@ xlabel('N^{1/2}','Interpreter','tex','FontSize',14,'FontWeight','bold');
 ylabel('Relative l_2 error','Interpreter','tex','FontSize',14,'FontWeight','bold');
 legend({'FS','PLS', 'exp trendline'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
 title(sprintf('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
-%export_fig(gcf, fullfile(res.results_dir,'error_vs_N_fs_s%d.png'),'-png','-r300','-transparent');
-%close(h);
+export_fig(gcf, fullfile(results_dir,'torus_error_vs_N.png'),'-png','-r300','-transparent');
+close(h);

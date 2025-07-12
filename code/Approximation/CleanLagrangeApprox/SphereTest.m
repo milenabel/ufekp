@@ -52,8 +52,26 @@ end
 
 % results_dir('results');
 
-xx_sq = sqrt(Ns);
-xx = xx_sq(:);
+%% Save results 
+% Timestamp for uniqueness
+
+sN = sqrt(Ns);
+function_name = 'sphere';
+timestamp = datestr(datetime('now'), 'yyyyMMdd_HHmmss');
+results_dir = fullfile('results/', sprintf('%s', function_name),'/high');
+if ~exist(results_dir, 'dir')
+    mkdir(results_dir);
+end
+results_filename = fullfile(results_dir, sprintf('results_%s.mat', function_name));
+
+
+% Save everything
+save(results_filename, ...
+    'el2_poly', 'elinf_poly', 'a_time_poly', 'e_time_poly', 'coeff_exp', 'ell', ...
+    'el2', 'elinf', 'a_time', 'e_time', 'cond_num', 'sparsity', ...
+    'sN', 'function_name', 'timestamp');
+
+xx = sN(:);
 yy = el2(:); 
 ok = isnan(yy)|yy<=0;
 xx(ok)=[];  yy(ok)=[];
@@ -77,5 +95,5 @@ xlabel('N^{1/2}','Interpreter','tex','FontSize',14,'FontWeight','bold');
 ylabel('Relative l_2 error','Interpreter','tex','FontSize',14,'FontWeight','bold');
 legend({'FS','PLS', 'exp trendline'}, 'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
 title(sprintf('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel'),'Interpreter','tex','FontWeight','bold','FontSize',14);
-%export_fig(gcf, fullfile(res.results_dir,'error_vs_N_fs_s%d.png'),'-png','-r300','-transparent');
-%close(h);
+export_fig(gcf, fullfile(results_dir,'error_vs_N_fs_s%d.png'),'-png','-r300','-transparent');
+close(h);
