@@ -1,2 +1,2 @@
-# ufekp
-A Unified Framework for Efficient Kernel and Polynomial Interpolation.
+# ufekp - A Unified Framework for Efficient Kernel and Polynomial Interpolation.
+
