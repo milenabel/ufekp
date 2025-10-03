@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2022)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: article.aux
+The style file: siamplain.bst
+Database file #1: article_refs_mod.bib
+Warning--I didn't find a database entry for "Liu"
+Warning--I didn't find a database entry for "Macedo"
+You've used 21 entries,
+            2268 wiz_defined-function locations,
+            701 strings with 7777 characters,
+and the built_in function-call counts, 8709 in all, are:
+= -- 829
+> -- 319
+< -- 0
++ -- 127
+- -- 104
+* -- 630
+:= -- 1206
+add.period$ -- 21
+call.type$ -- 21
+change.case$ -- 113
+chr.to.int$ -- 0
+cite$ -- 21
+duplicate$ -- 462
+empty$ -- 753
+format.name$ -- 104
+if$ -- 1948
+int.to.chr$ -- 0
+int.to.str$ -- 21
+missing$ -- 22
+newline$ -- 66
+num.names$ -- 42
+pop$ -- 162
+preamble$ -- 1
+purify$ -- 94
+quote$ -- 0
+skip$ -- 372
+stack$ -- 0
+substring$ -- 694
+swap$ -- 190
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 80
+warning$ -- 0
+while$ -- 91
+width$ -- 23
+write$ -- 193
+(There were 2 warnings)
