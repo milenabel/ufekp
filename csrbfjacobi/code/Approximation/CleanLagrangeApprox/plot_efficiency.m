@@ -1,0 +1,291 @@
+%% PLOT_EFFICIENCY — timing plots + CSV table (PLS, Diag, FS, FC).
+function plot_efficiency(function_name, subdir, base_results_dir, smoothness_idx, variety)
+% Usage:
+%   plot_efficiency('abs_1d','high')
+%   plot_efficiency('abs_1d','high','results',1)
+%   plot_efficiency('xy_p_2d','high','results',1,false)   % combined: PLS/Diag/FS/FC in one plot
+%
+% variety (logical, default = true):
+%   true  -> FS and FC panels with K_t = 1e12, 1e8, 1e4
+%   false -> one combined panel (PLS, Diag, FS=fs1, FC=vs1)
+
+% arguments
+if nargin < 3 || isempty(base_results_dir), base_results_dir = 'results'; end
+if nargin < 2 || isempty(subdir), subdir = 'high'; end
+if nargin < 4 || isempty(smoothness_idx), smoothness_idx = 1; end
+if nargin < 5 || isempty(variety), variety = true; end
+sm = max(1, min(3, smoothness_idx));  % 1=C^2, 2=C^4, 3=C^6
+
+% load
+res = loadResults(function_name, subdir, base_results_dir);
+res.sNs = res.sN;
+results_dir = res.results_dir;
+
+% limits
+xmin = min(res.sNs(:));
+xmax = max(res.sNs(:));
+[at_min, at_max] = globalYLim_times(res, sm, 'assembly');
+[et_min, et_max] = globalYLim_times(res, sm, 'eval');
+
+% plotting
+if variety
+    % FS panels (PLS + Diag + FS)
+    plotAssemblyOrEval_FSFC(res, sm, xmin, xmax, at_min, at_max, 'assembly','fs');
+    plotAssemblyOrEval_FSFC(res, sm, xmin, xmax, et_min, et_max, 'eval','fs');
+    % FC panels (PLS + Diag + FC)
+    plotAssemblyOrEval_FSFC(res, sm, xmin, xmax, at_min, at_max, 'assembly','fc');
+    plotAssemblyOrEval_FSFC(res, sm, xmin, xmax, et_min, et_max, 'eval','fc');
+else
+    % one combined panel per kind: PLS, Diag, FS(fs1), FC(vs1)
+    plotAssemblyOrEval_FSFC(res, sm, xmin, xmax, at_min, at_max, 'assembly','combo');
+    plotAssemblyOrEval_FSFC(res, sm, xmin, xmax, et_min, et_max, 'eval','combo');
+end
+
+% CSV
+T = build_efficiency_table_long(res, sm);
+writetable(T, fullfile(results_dir,sprintf('efficiency_table_%d.csv', sm)));
+fprintf('Wrote: %s\n', fullfile(results_dir,sprintf('efficiency_table_%d.csv', sm)));
+end
+
+%% Plotting
+%% One function for Assembly/Eval and FS/FC/COMBO (controlled by flags)
+function plotAssemblyOrEval_FSFC(res, sm, xmin, xmax, y_min, y_max, kind, which)
+dim  = res.dim; sNs = res.sNs(:);
+n = numel(sNs);
+
+% poly column (or NaNs)
+if strcmpi(kind,'assembly')
+    if isfield(res,'a_time_poly'), polyv = res.a_time_poly(:,1); else, polyv = NaN(n,1); end
+else
+    if isfield(res,'e_time_poly'), polyv = res.e_time_poly(:,1); else, polyv = NaN(n,1); end
+end
+
+% diag column (or NaNs)
+if strcmpi(kind,'assembly')
+    if isfield(res,'a_time_diag'), diagv = res.a_time_diag(:,sm); else, diagv = NaN(n,1); end
+else
+    if isfield(res,'e_time_diag'), diagv = res.e_time_diag(:,sm); else, diagv = NaN(n,1); end
+end
+
+% prepare series based on 'which'
+S = cell(1,3);  % reused below
+if strcmpi(which,'fs') || strcmpi(which,'fc')
+    if strcmpi(which,'fs')
+        labtag = 'fs'; filetag = 'fs';
+    else
+        labtag = 'vs'; filetag = 'vs';
+    end
+    for j=1:3
+        tag = sprintf('%s%d', labtag, j);
+        if strcmpi(kind,'assembly'), fld = sprintf('a_time_%s', tag);
+        else,                         fld = sprintf('e_time_%s', tag);
+        end
+        if isfield(res, fld), S{j} = res.(fld)(:,sm); else, S{j} = NaN(n,1); end
+    end
+elseif strcmpi(which,'combo')
+    % FS := fs1 (single K_t)
+    if strcmpi(kind,'assembly')
+        fs_fld = 'a_time_fs1'; 
+    else
+        fs_fld = 'e_time_fs1'; 
+    end
+    if isfield(res, fs_fld), FS1 = res.(fs_fld)(:,sm); else, FS1 = NaN(n,1); end
+else
+    error('which must be ''fs'', ''fc'', or ''combo''.');
+end
+
+% plotting 
+h = figure; set(h,'Color','none'); ax = gca;
+set(ax,'Color','none','FontSize',12,'LineWidth',1.2);
+marks = {'-o','-s','-^','-x','-+'};
+
+semilogy(sNs, polyv, marks{1}, 'LineWidth',2); hold on;
+semilogy(sNs, diagv, marks{2}, 'LineWidth',2);
+
+if strcmpi(which,'combo')
+    semilogy(sNs, FS1, marks{4}, 'LineWidth',2);
+else
+    semilogy(sNs, S{1}, marks{3}, 'LineWidth',2);
+    semilogy(sNs, S{2}, marks{4}, 'LineWidth',2);
+    semilogy(sNs, S{3}, marks{5}, 'LineWidth',2);
+end
+
+ax.LineWidth = 2; ax.FontSize = 16;
+ax.XAxis.FontWeight = 'bold'; ax.YAxis.FontWeight = 'bold';
+
+if dim==1
+    xlabel('N','Interpreter','tex','FontSize',16,'FontWeight','bold');
+else
+    xlabel(sprintf('N^{1/%d}', dim),'Interpreter','tex','FontSize',16,'FontWeight','bold');
+end
+if strcmpi(kind,'assembly')
+    ylabel('Assembly and Solve time (s)','Interpreter','tex','FontSize',16,'FontWeight','bold');
+else
+    ylabel('Evaluation time (s)','Interpreter','tex','FontSize',16,'FontWeight','bold');
+end
+
+if strcmpi(which,'combo')
+    legend({'PLS','Diag','FS'}, ...
+        'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
+else
+    legend({'PLS','Diag','K_t = 1e12','K_t = 1e8','K_t = 1e4'}, ...
+        'Location','best','Interpreter','tex','FontWeight','bold','FontSize',14);
+end
+
+if strcmpi(kind,'assembly')
+    title(texTitle('Assembly and Solve time', sm), 'Interpreter','tex','FontWeight','bold','FontSize',16);
+else
+    title(texTitle('Evaluation time', sm), 'Interpreter','tex','FontWeight','bold','FontSize',16);
+end
+
+xlim([xmin xmax]); ylim([y_min y_max]);
+
+if strcmpi(which,'combo')
+    if strcmpi(kind,'assembly')
+        outname = sprintf('assembly_time_vs_N_combo_s%d.png', sm);
+    else
+        outname = sprintf('eval_time_vs_N_combo_s%d.png', sm);
+    end
+else
+    if strcmpi(kind,'assembly')
+        outname = sprintf('assembly_time_vs_N_%s_s%d.png', which, sm);
+    else
+        outname = sprintf('eval_time_vs_N_%s_s%d.png', which, sm);
+    end
+end
+
+export_fig(gcf, fullfile(res.results_dir, outname), '-png','-r300','-transparent');
+close(h);
+end
+
+%% CSV Table
+function T = build_efficiency_table_long(res, sm)
+% Long-form table: one row per N & method. Includes PLS, Diag, FS (Kt=1e12,1e8,1e4),
+% and FC (same Kt) when present. Also includes sparsity & cond if available.
+N1 = res.sNs(:);
+if isfield(res,'sN') && isfield(res,'dim')
+    N = round(res.sN(:).^res.dim);
+else
+    N = (1:numel(res.sNs(:))).';
+end
+
+mth = {}; Kt = []; Asm = []; Evl = []; Sp = []; Cd = []; Ncol = []; N1col = [];
+
+    function add(methodName, Ktval, a, e, sp, cd)
+        n = numel(N1);
+        if numel(a) < n, a  = [a;  nan(n-numel(a),1)]; end
+        if numel(e) < n, e  = [e;  nan(n-numel(e),1)]; end
+        if numel(sp)< n, sp = [sp; nan(n-numel(sp),1)]; end
+        if numel(cd)< n, cd = [cd; nan(n-numel(cd),1)]; end
+        mth = [mth; repmat({methodName}, n, 1)];
+        Kt  = [Kt;  repmat(Ktval, n, 1)];
+        Asm = [Asm; a];
+        Evl = [Evl; e];
+        Sp  = [Sp;  sp];
+        Cd  = [Cd;  cd];
+        Ncol= [Ncol; N];
+        N1col=[N1col;N1];
+    end
+
+% PLS
+if isfield(res,'a_time_poly') && isfield(res,'e_time_poly')
+    add('PLS', NaN, res.a_time_poly(:), res.e_time_poly(:), NaN(size(N1)), NaN(size(N1)));
+end
+
+% Diag
+if isfield(res,'a_time_diag') && isfield(res,'e_time_diag')
+    add('Diag', NaN, res.a_time_diag(:,sm), res.e_time_diag(:,sm), NaN(size(N1)), NaN(size(N1)));
+end
+
+% FS (Kt = 1e12, 1e8, 1e4)
+KtVals = [1e12, 1e8, 1e4];
+for j=1:3
+    tag = sprintf('fs%d', j);
+    a_fld = sprintf('a_time_%s', tag);
+    e_fld = sprintf('e_time_%s', tag);
+    s_fld = sprintf('sparsity_%s', tag);
+    c_fld = sprintf('cond_%s', tag);
+    if isfield(res, a_fld), a = res.(a_fld)(:,sm); else, a = NaN(numel(N1),1); end
+    if isfield(res, e_fld), e = res.(e_fld)(:,sm); else, e = NaN(numel(N1),1); end
+    if isfield(res, s_fld), sp = res.(s_fld)(:,sm); else, sp = NaN(numel(N1),1); end
+    if isfield(res, c_fld), cd = res.(c_fld)(:,sm); else, cd = NaN(numel(N1),1); end
+    if ~all(isnan(a)) || ~all(isnan(e))
+        add('FS', KtVals(j), a, e, sp, cd);
+    end
+end
+
+% FC (Kt = 1e12, 1e8, 1e4)
+for j=1:3
+    tag = sprintf('vs%d', j);
+    a_fld = sprintf('a_time_%s', tag);
+    e_fld = sprintf('e_time_%s', tag);
+    s_fld = sprintf('sparsity_%s', tag);
+    c_fld = sprintf('cond_%s', tag);
+    hasA = isfield(res, a_fld);
+    hasE = isfield(res, e_fld);
+    if ~(hasA || hasE), continue; end
+    if hasA, a = res.(a_fld)(:,sm); else, a = NaN(numel(N1),1); end
+    if hasE, e = res.(e_fld)(:,sm); else, e = NaN(numel(N1),1); end
+    if isfield(res, s_fld), sp = res.(s_fld)(:,sm); else, sp = NaN(numel(N1),1); end
+    if isfield(res, c_fld), cd = res.(c_fld)(:,sm); else, cd = NaN(numel(N1),1); end
+    if ~all(isnan(a)) || ~all(isnan(e))
+        add('FC', KtVals(j), a, e, sp, cd);
+    end
+end
+
+T = table(Ncol, N1col, string(mth), Kt, Asm, Evl, Sp, Cd, ...
+    'VariableNames',{'N','N1overd','Method','Kt','AsmSolve_s','Eval_s','Sparsity','Cond'});
+
+% sort nicely: by N, then Method (PLS,Diag,FS,FC), then Kt (NaN last)
+[~, ordMethod] = ismember(T.Method, ["PLS","Diag","FS","FC"]);
+ordMethod(ordMethod==0) = 99;
+[~, order] = sortrows([T.N, ordMethod, isnan(T.Kt), T.Kt], [1 2 -3 4]);
+T = T(order,:);
+end
+
+%% helpers that remain
+function res = loadResults(function_name, subdir, base_results_dir)
+valid_subdirs = {'high','low','fixed','mixed'};
+if ~ismember(subdir, valid_subdirs)
+    error('Invalid subdirectory: %s. Must be one of: high, low, fixed, mixed', subdir);
+end
+results_dir = fullfile(base_results_dir, function_name, subdir);
+matfile     = fullfile(results_dir, sprintf('results_%s.mat', function_name));
+if ~exist(matfile,'file'), error('Results file not found: %s', matfile); end
+data = load(matfile);
+data.results_dir = results_dir;
+res = data;
+end
+
+function [ymin, ymax] = globalYLim_times(res, sm, kind)
+vals = [];
+switch lower(kind)
+    case 'assembly'
+        if isfield(res,'a_time_poly'), vals = [vals; res.a_time_poly(:)]; end
+        if isfield(res,'a_time_diag'), vals = [vals; res.a_time_diag(:,sm)]; end
+        for tag = ["fs1","fs2","fs3","vs1","vs2","vs3"]
+            f = sprintf('a_time_%s', tag);
+            if isfield(res,f), vals = [vals; res.(f)(:,sm)]; end
+        end
+    case 'eval'
+        if isfield(res,'e_time_poly'), vals = [vals; res.e_time_poly(:)]; end
+        if isfield(res,'e_time_diag'), vals = [vals; res.e_time_diag(:,sm)]; end
+        for tag = ["fs1","fs2","fs3","vs1","vs2","vs3"]
+            f = sprintf('e_time_%s', tag);
+            if isfield(res,f), vals = [vals; res.(f)(:,sm)]; end
+        end
+end
+vals = vals(isfinite(vals) & vals>0);
+if isempty(vals), ymin=1e-3; ymax=1; return; end
+ymin = 10^floor(log10(min(vals)));
+ymax = 10^ceil (log10(max(vals)));
+end
+
+function t = texTitle(base, sm)
+switch sm
+    case 1, kern = 'C^2(R^3)';
+    case 2, kern = 'C^4(R^3)';
+    case 3, kern = 'C^6(R^3)';
+end
+t = sprintf('%s, %s Wendland Kernel', base, kern);
+end

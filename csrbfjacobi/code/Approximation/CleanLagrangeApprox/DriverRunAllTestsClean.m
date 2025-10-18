@@ -108,8 +108,8 @@ elseif dim==2
     %f = x.^45 .* y.^35;                        function_name = 'poly_2d';
     %f = exp(x + y);                          function_name = 'exp_xy_2d';
 
-    f = (x.^2 + y.^2).^(3/2);                function_name = 'xy_p_2d';
-    %f = exp( ((x + y).^(2))/0.2 );           function_name = 'exp_p_2d';
+    %f = (x.^2 + y.^2).^(3/2);                function_name = 'xy_p_2d';
+    f = exp( ((x + y).^(2))/0.2 );           function_name = 'exp_p_2d';
     dfx = diff(f,x); dfy = diff(f,y);
 elseif dim==3
     syms x y z;      
@@ -120,8 +120,8 @@ elseif dim==3
     % f = 1./(1 + 9*(x.^2 + y.^2 + z.^2));             function_name = 'rk_3d';
     %f = x.^(4).*y.^(2).*z.^(2);                       function_name = 'poly_3d';
 
-    f = (x.^2 + y.^2 + z^2).^(3/2);                 function_name = 'xy_p_3d';
-    %f = exp( ((x + y + z).^(2))/0.1 );              function_name = 'exp_p_3d';
+    %f = (x.^2 + y.^2 + z^2).^(3/2);                 function_name = 'xy_p_3d';
+    f = exp( ((x + y + z).^(2))/0.1 );              function_name = 'exp_p_3d';
     dfx = diff(f,x); dfy = diff(f,y); dfz = diff(f,z);
 end
 f = matlabFunction(f);

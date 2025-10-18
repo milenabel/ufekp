@@ -1,0 +1,13 @@
+\begin{table}[t]\centering\small
+\caption{rk_1d (d=1): Summary at largest $N$.}
+\begin{tabular}{lrrrrr}
+\toprule
+Method & $\mathrm{rel}\,\ell_2$ & $\mathrm{rel}\,\ell_\infty$ & solve(s) & eval(s) & spars(\%)\\
+\midrule
+PLS & 9.66e-16 & NaN & 0.00183 & 0.0734 & --\\
+Diag & 9.76e-16 & NaN & 0.00172 & 0.0826 & --\\
+FS (K_t=10^8) & 8.99e-16 & NaN & 0.00433 & 0.0727 & --\\
+PHS+poly & 6.72e+60 & NaN & 0.0037 & 0.0623 & --\\
+\bottomrule
+\end{tabular}
+\end{table}

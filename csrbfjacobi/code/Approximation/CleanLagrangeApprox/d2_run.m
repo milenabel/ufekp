@@ -3,7 +3,7 @@
 
 
 %% Spatial dimension
-dim = 2;
+dim = 3;
 
 %% Desired polynomial degrees for each N value
 fix_d = 20;
@@ -681,7 +681,9 @@ elseif dim==2
     %f = 1./(1 + 25*(x.^2 + y.^2));           function_name = 'rk_2d';
     %f = exp(-10*((x-.3).^(-2)+y.^(-2)));    function_name = 'exp10_2d';
     %f = exp(-10*((x-.3).^2+y.^2));           function_name = 'exp10inv_2d';
-    f = x.^8 .* y.^8;                        function_name = 'poly_2d';
+    % f = x.^8 .* y.^8;                        function_name = 'poly_2d';
+    f = (x.^2 + y.^2).^(3/2);                function_name = 'xy_p_2d';
+    %f = exp( ((x + y).^(2))/0.2 );           function_name = 'exp_p_2d';
     dfx = diff(f,x); dfy = diff(f,y);
 elseif dim==3
     syms x y z;      
