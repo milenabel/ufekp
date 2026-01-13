@@ -161,7 +161,7 @@ function plotErrorVsN_manifold(res)
     % labels/title
     xlabel('N^{1/2}','Interpreter','tex','FontSize',16,'FontWeight','bold');
     ylabel('Relative l_2 error','Interpreter','tex','FontSize',16,'FontWeight','bold');
-    title('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel', 'Interpreter','tex','FontSize',18,'FontWeight','bold');
+    title('Relative l_2 error vs. N^{1/d}, C^2(R^3) Wendland Kernel', 'Interpreter','tex','FontSize',16,'FontWeight','bold');
 
     % legend
     if ~isempty(H)
