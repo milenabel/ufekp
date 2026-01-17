@@ -18,10 +18,15 @@ alph = 0; % Legendre (Jacobi alpha=0), matches PLS
 %% Load the same node sets
 st_e = load('SpherePoissonNodesLarge.mat');
 xe = [st_e.fullintnodes{2}; st_e.bdrynodes{2}];
+% Training nodes
 st = load('SpherePoissonNodesClustered.mat');
+clear p N pxe;
 
 start_nodes = 1;
-end_nodes = min(end_nodes, 5);
+end_nodes = size(st.fullintnodes,1);
+if dim == 3
+    end_nodes = min(end_nodes, 5);
+end
 
 % Choose the same target function you used in the corresponding run 
 syms x y z;      

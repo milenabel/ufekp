@@ -1,4 +1,4 @@
-%% PLOT_EFFICIENCY — timing plots + CSV table (PLS, Diag, FS, FC).
+%% PLOT_EFFICIENCY — timing plots (PLS, Diag, FS, FC).
 function plot_efficiency(function_name, subdir, base_results_dir, smoothness_idx, variety)
 % Usage:
 %   plot_efficiency('abs_1d','high')

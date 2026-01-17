@@ -341,8 +341,145 @@ These ablation results are later visualized via `plot_edgeabl.m` and `plot_edgea
 
 --- 
 
-## 7. Plotting scripts and figures
+## 7. Plotting and figure generation
 
-All plotting scripts are located in `experiments/plotting`, and all the produced plots along with the actual results files are stored in `results/` folder under the according function name.
+All plotting scripts are located in the `experiments/plotting/` directory. These scripts read precomputed results stored under the `results/` (or `results_ablation/`) directory and reproduce the figures shown in the paper.
+
+### 7.1 General conventions
+
+Unless stated otherwise, all plotting routines expect results stored in the canonical format
+
+results/<function_name>/<regime>/results_<function_name>.mat
+
+where
+
+- function_name is a string identifier such as `abs_1d`, `exp_p_2d`, `xy_p_3d`, `boundary_test`, `sphere`, or `torus`;
+- regime is one of `high`, `low`, `fixed`, or `mixed`, corresponding to the point/degree regimes used in the paper.
+
+Each results_*.mat file typically contains:
+- dim – spatial dimension,
+- sN – \(N^{\frac{1}{d}}\), used as the x-axis in Euclidean plots,
+- error arrays such as el2_poly, el2_diag, el2_fs1, el2_fs2, el2_fs3,
+- optional variants such as el2_fc*, el2_phs,
+- timing data (a_time_*, e_time_*) for efficiency plots.
+
+All plotting scripts assume that the repository root is on the MATLAB path and that MATLAB is launched from within the repository.
 
 ---
+
+### 7.2 Euclidean error plots
+
+plot_results_l2.m
+
+Usage:
+plot_results_l2(function_name, regime, base_results_dir, smoothness_idx, variety)
+
+- Reproduces relative \(\ell^2\) error vs. \(N^{\frac{1}{d}}\) plots for Euclidean domains.
+- Compares polynomial least squares (PLS), diagonal limit (Diag), and unified (FS) methods.
+- For 1D (or when variety=true), multiple FS curves corresponding to different target condition numbers
+  \(K_t = 10^12, 10^8, 10^4\) are shown.
+
+Arguments:
+- function_name      : string or cell array of function identifiers
+- regime             : typically 'high'
+- base_results_dir   : optional, default 'results'
+- smoothness_idx     : optional kernel smoothness index (clamped to {1,2,3})
+- variety            : logical flag controlling multi-panel vs. combined plots
+
+Expected input:
+results/<function_name>/<regime>/results_<function_name>.mat
+
+---
+
+plot_results_l2_wphs.m
+
+Usage:
+plot_results_l2_wphs(function_name, regime, base_results_dir, smoothness_idx, variety)
+
+- Same as plot_results_l2, but additionally overlays PHS+poly baselines if present.
+- The PHS curve is read from the same results file if the field el2_phs exists.
+
+---
+
+### 7.3 Efficiency (error vs. cost) plots
+
+plot_efficiency.m
+
+Usage:
+plot_efficiency(function_name, regime, base_results_dir, smoothness_idx, variety)
+
+- Produces error-vs-cost plots comparing PLS, Diag, FS (and FC in 1D).
+- Uses timing data stored in the results files.
+- With variety=true, produces separate panels for different target condition numbers.
+
+Expected input:
+results/<function_name>/<regime>/results_<function_name>.mat
+
+---
+
+plot_efficiency_wphs.m
+
+Usage:
+plot_efficiency_wphs(function_name, regime, base_results_dir, smoothness_idx, variety)
+
+- Same as plot_efficiency, but includes PHS+poly curves if available.
+
+---
+
+### 7.4 Manifold error plots
+
+plot_l2_manifold.m
+
+Usage:
+plot_l2_manifold(regime, base_results_dir)
+
+- Reproduces relative \(\ell^2\) error plots for manifold experiments:
+  boundary_test (hemisphere with boundary),
+  sphere,
+  torus.
+
+Expected input:
+results/<manifold_name>/<regime>/results_<manifold_name>*.mat
+
+The base results file must contain:
+- either sN or Ns (node count),
+- el2 (FS error),
+- el2_poly (PLS baseline).
+
+If a file containing el2_phs is present in the same folder, the PHS+poly baseline is added automatically.
+
+---
+
+plot_sphere_with_phs_sweep.m
+
+Usage:
+plot_sphere_with_phs_sweep(regime, base_results_dir)
+
+- Specialized plot for the sphere showing a sweep over PHS degrees.
+- Reads FS and PLS data from standard sphere results files and overlays all files matching
+
+results/sphere/<regime>/results_sphere_phsp_*.mat
+
+Each sweep file must contain el2_phs.
+
+---
+
+### 7.5 2D edge vs. interior ablation plots
+
+plot_edgeabl.m
+plot_edgeabl_all.m
+
+These scripts visualize the 2D edge-vs-interior ablation experiments.
+
+Expected directory structure:
+results_ablation/<function_name>/edge_vs_interior/abl2d_<function_name>_*.mat
+
+Important note:
+These plotting scripts load the node file `DiskPoissonNodesClustered.mat` by filename only.
+This file must therefore be either:
+- in the current working directory, or
+- available on the MATLAB path.
+
+Failure to do so will result in a load error.
+
+--- 
